@@ -24,7 +24,6 @@ fetch('db.json')
         // Extract details of the first movie
         const firstMovie = data.films[0];
         
-        // Populate the movie details
         document.getElementById('title').textContent = firstMovie.title;
         document.getElementById('runtime').textContent = `${firstMovie.runtime} minutes`;
         document.getElementById('showtime').textContent = firstMovie.showtime;
