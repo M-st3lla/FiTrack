@@ -5,7 +5,7 @@ void main() {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          backgroundColor: Color.fromARGB(255, 226, 110, 201),
+          backgroundColor: const Color.fromARGB(255, 226, 110, 201),
           title: const Text(
             "Login Screen",
             style: TextStyle(
@@ -17,8 +17,7 @@ void main() {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset("assets/Food advertising.jpeg",
-                height: 100, width: 100),
+            Image.asset("assets/calendar.jpg", height: 100, width: 100),
             const Text("Login Screen",
                 style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
             const SizedBox(height: 15),
@@ -32,7 +31,7 @@ void main() {
             const SizedBox(height: 30),
             MaterialButton(
                 onPressed: () {},
-                color: Color.fromARGB(255, 200, 54, 168),
+                color: const Color.fromARGB(255, 200, 54, 168),
                 textColor: Colors.white,
                 child: const Text("Login"))
           ],
