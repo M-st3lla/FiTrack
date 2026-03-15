@@ -121,6 +121,19 @@ class LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      Get.toNamed("/auctionitems");
+                    },
+                    child: const Text(
+                      "Auction Items",
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
                   const Text("Forgot password?"),
                   const SizedBox(width: 5),
                   const Text(
