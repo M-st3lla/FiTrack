@@ -12,15 +12,18 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color(0xFFF6E6CB),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset("assets/calendar.jpg", height: 100, width: 100),
-              const SizedBox(height: 30),
+              Image.asset(
+                "assets/branding2.png",
+                height: 300,
+              ),
+              const SizedBox(height: 5),
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
                 child: Row(
@@ -42,6 +45,8 @@ class LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   hintText: "Use email or phone number",
+                  hintStyle: const TextStyle(
+                      color: Color(0xFFC1957D), fontWeight: FontWeight.w900),
                   prefixIcon: const Icon(Icons.person),
                 ),
               ),
@@ -69,6 +74,8 @@ class LoginScreenState extends State<LoginScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   hintText: "Use a strong password",
+                  hintStyle: const TextStyle(
+                      color: Color(0xFFC1957D), fontWeight: FontWeight.w900),
                   suffixIcon: const Icon(Icons.visibility_off),
                   prefixIcon: const Icon(Icons.lock),
                 ),
@@ -79,7 +86,7 @@ class LoginScreenState extends State<LoginScreen> {
                     height: 50,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 74, 28, 87),
+                      color: const Color(0xFF563225),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -102,33 +109,7 @@ class LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       "Sign up",
                       style: TextStyle(
-                        color: Colors.purple,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      Get.toNamed("/dashboard");
-                    },
-                    child: const Text(
-                      "Dashboard",
-                      style: TextStyle(
-                        color: Colors.purple,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      Get.toNamed("/auctionitems");
-                    },
-                    child: const Text(
-                      "Auction Items",
-                      style: TextStyle(
-                        color: Colors.purple,
+                        color: Color(0xFFC1957D),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -139,7 +120,7 @@ class LoginScreenState extends State<LoginScreen> {
                   const Text(
                     "Reset password",
                     style: TextStyle(
-                      color: Colors.purple,
+                      color: Color(0xFFC1957D),
                       fontWeight: FontWeight.w700,
                     ),
                   ),

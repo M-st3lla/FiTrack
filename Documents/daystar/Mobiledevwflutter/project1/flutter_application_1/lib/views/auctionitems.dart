@@ -35,7 +35,7 @@ class _AuctionItemsState extends State<AuctionItems> {
     },
   ];
 
-  final Color vintageBrown = const Color(0xFF5A3E2B);
+  final Color vintageBrown = const Color(0xFFF7E7CB);
   final Color sageGreen = const Color(0xFFA3B18A);
 
   @override
@@ -44,7 +44,7 @@ class _AuctionItemsState extends State<AuctionItems> {
       backgroundColor: sageGreen.withOpacity(0.25),
       appBar: AppBar(
         title: const Text("Auction Items"),
-        backgroundColor: vintageBrown,
+        backgroundColor: const Color(0xFF703323).withOpacity(0.4),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -94,7 +94,7 @@ class _AuctionItemsState extends State<AuctionItems> {
                   Text(
                     "Price: Ksh ${item["price"]}",
                     style: TextStyle(
-                      color: vintageBrown,
+                      color: const Color(0xFF703323).withOpacity(0.8),
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
@@ -124,7 +124,11 @@ class _AuctionItemsState extends State<AuctionItems> {
                       onPressed: () {},
                       child: const Text(
                         "Bid",
-                        style: TextStyle(fontSize: 12, color: Colors.white),
+                        style: TextStyle(
+                          color: Color(0xFFB3684D),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

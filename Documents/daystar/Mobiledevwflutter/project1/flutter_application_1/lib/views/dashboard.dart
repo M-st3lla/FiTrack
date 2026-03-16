@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'auctionitems.dart'; // <-- import your AuctionItems page
+import 'auctionitems.dart';
+import 'profile.dart';
+import 'settings.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -14,8 +16,8 @@ class _DashboardState extends State<Dashboard> {
   final List<Widget> _pages = [
     const AuctionItems(),
     const Center(child: Text('Live Auctions', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Profile', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Settings', style: TextStyle(fontSize: 24))),
+    const Profile(),
+    const Settings(),
   ];
 
   void _onItemTapped(int index) {
@@ -33,8 +35,8 @@ class _DashboardState extends State<Dashboard> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         backgroundColor: const Color(0xFFE7D4B5),
-        selectedItemColor: const Color.fromARGB(255, 44, 146, 139),
-        unselectedItemColor: const Color.fromARGB(255, 185, 120, 220),
+        selectedItemColor: const Color(0xFF9A4D37),
+        unselectedItemColor: const Color(0xFFC0836D),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
