@@ -88,7 +88,7 @@ class LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onTap: () {
-                    Get.offAndToNamed("/homescreen");
+                    Get.offAndToNamed("/dashboard");
                   }),
               const SizedBox(height: 15),
               Row(

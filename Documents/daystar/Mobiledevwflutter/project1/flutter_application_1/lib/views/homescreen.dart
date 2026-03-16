@@ -1,6 +1,7 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/configs/colors.dart';
+import 'dashboard.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,12 +20,17 @@ class _HomeScreenState extends State<HomeScreen> {
         buttonBackgroundColor: secondaryColor,
         items: const <Widget>[
           Icon(Icons.dashboard, size: 30),
-          Icon(Icons.category_outlined, size: 30),
-          Icon(Icons.list, size: 30),
+          Icon(Icons.question_mark_rounded, size: 30),
+          Icon(Icons.contact_page, size: 30),
           Icon(Icons.person, size: 30)
         ],
         onTap: (index) {
-          //Handle button tap
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const Dashboard()),
+            );
+          }
         },
       ),
     );
