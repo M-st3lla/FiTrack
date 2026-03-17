@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'auctionitems.dart';
 import 'profile.dart';
 import 'settings.dart';
+import 'liveauctions.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -15,7 +16,7 @@ class _DashboardState extends State<Dashboard> {
 
   final List<Widget> _pages = [
     const AuctionItems(),
-    const Center(child: Text('Live Auctions', style: TextStyle(fontSize: 24))),
+    const LiveAuctions(),
     const Profile(),
     const Settings(),
   ];

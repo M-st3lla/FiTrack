@@ -32,7 +32,7 @@ class LoginScreenState extends State<LoginScreen> {
                     Text(
                       "Enter username",
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w300,
                         fontSize: 16,
                       ),
                     ),
@@ -46,7 +46,8 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
                   hintText: "Use email or phone number",
                   hintStyle: const TextStyle(
-                      color: Color(0xFFC1957D), fontWeight: FontWeight.w900),
+                      color: Color.fromARGB(255, 181, 134, 108),
+                      fontWeight: FontWeight.w300),
                   prefixIcon: const Icon(Icons.person),
                 ),
               ),
@@ -60,7 +61,7 @@ class LoginScreenState extends State<LoginScreen> {
                       "Enter password",
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
                   ],
@@ -75,7 +76,8 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
                   hintText: "Use a strong password",
                   hintStyle: const TextStyle(
-                      color: Color(0xFFC1957D), fontWeight: FontWeight.w900),
+                      color: Color.fromARGB(255, 181, 134, 108),
+                      fontWeight: FontWeight.w300),
                   suffixIcon: const Icon(Icons.visibility_off),
                   prefixIcon: const Icon(Icons.lock),
                 ),
@@ -98,34 +100,44 @@ class LoginScreenState extends State<LoginScreen> {
                     Get.offAndToNamed("/dashboard");
                   }),
               const SizedBox(height: 15),
-              Row(
+              Column(
                 children: [
-                  const Text("Don't have an account?"),
-                  const SizedBox(width: 5),
-                  GestureDetector(
-                    onTap: () {
-                      Get.toNamed("/signup");
-                    },
-                    child: const Text(
-                      "Sign up",
-                      style: TextStyle(
-                        color: Color(0xFFC1957D),
-                        fontWeight: FontWeight.w700,
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Forgot password?"),
+                      SizedBox(width: 5),
+                      Text(
+                        "Reset password",
+                        style: TextStyle(
+                          color: Color(0xFFC1957D),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const Spacer(),
-                  const Text("Forgot password?"),
-                  const SizedBox(width: 5),
-                  const Text(
-                    "Reset password",
-                    style: TextStyle(
-                      color: Color(0xFFC1957D),
-                      fontWeight: FontWeight.w700,
-                    ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Don't have an account?"),
+                      const SizedBox(width: 5),
+                      GestureDetector(
+                        onTap: () {
+                          Get.toNamed("/signup");
+                        },
+                        child: const Text(
+                          "Sign up",
+                          style: TextStyle(
+                            color: Color(0xFFC1957D),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              )
             ],
           ),
         ),

@@ -21,7 +21,7 @@ class _ProfileState extends State<Profile> {
           children: [
             const CircleAvatar(
               radius: 50,
-              backgroundImage: NetworkImage('assets/avatar.jpeg'),
+              backgroundImage: AssetImage('assets/avatar.jpeg'),
             ),
             const SizedBox(height: 10),
             const Text(
