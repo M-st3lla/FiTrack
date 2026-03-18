@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
+import '../controllers/logincontroller.dart';
+
+LoginController loginController = Get.put(LoginController());
+TextEditingController usernameController = TextEditingController();
+TextEditingController passwordController = TextEditingController();
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,6 +45,7 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               TextField(
+                controller: usernameController,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -68,18 +74,30 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+              Obx(
+                () => TextField(
+                  controller: passwordController,
+                  obscureText: !loginController.isPasswordVisible.value,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    hintText: "Use a strong password",
+                    hintStyle: const TextStyle(
+                        color: Color.fromARGB(255, 181, 134, 108),
+                        fontWeight: FontWeight.w300),
+                    suffixIcon: GestureDetector(
+                      child: Icon(
+                        loginController.isPasswordVisible.value
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onTap: () {
+                        loginController.togglePassword();
+                      },
+                    ),
+                    prefixIcon: const Icon(Icons.lock),
                   ),
-                  hintText: "Use a strong password",
-                  hintStyle: const TextStyle(
-                      color: Color.fromARGB(255, 181, 134, 108),
-                      fontWeight: FontWeight.w300),
-                  suffixIcon: const Icon(Icons.visibility_off),
-                  prefixIcon: const Icon(Icons.lock),
                 ),
               ),
               const SizedBox(height: 30),
@@ -97,7 +115,16 @@ class LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onTap: () {
-                    Get.offAndToNamed("/dashboard");
+                    bool success = loginController.login(
+                        usernameController.text, passwordController.text);
+                    if (success) {
+                      Get.offAndToNamed("/dashboard");
+                    } else {
+                      Get.snackbar(
+                        "Login Failed",
+                        "Invalid username or password",
+                      );
+                    }
                   }),
               const SizedBox(height: 15),
               Column(
