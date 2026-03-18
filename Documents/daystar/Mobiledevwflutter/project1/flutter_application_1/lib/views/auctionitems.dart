@@ -55,7 +55,7 @@ class _AuctionItemsState extends State<AuctionItems> {
             crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.65, // slightly taller to fit content
+            childAspectRatio: 0.65,
           ),
           itemBuilder: (context, i) {
             final item = items[i];
@@ -70,7 +70,6 @@ class _AuctionItemsState extends State<AuctionItems> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Image
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -84,8 +83,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                     ),
                   ),
                   const SizedBox(height: 6),
-
-                  // Item Name
                   Text(
                     item["name"]!,
                     style: const TextStyle(
@@ -94,8 +91,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                     ),
                   ),
                   const Divider(color: Colors.black26),
-
-                  // Price
                   Text(
                     "Price: Ksh ${item["price"]}",
                     style: TextStyle(
@@ -105,8 +100,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                     ),
                   ),
                   const Divider(color: Colors.black26),
-
-                  // Highest bid
                   Text(
                     "Highest bid: Ksh ${item["bid"]}",
                     style: const TextStyle(
@@ -115,8 +108,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                     ),
                   ),
                   const SizedBox(height: 6),
-
-                  // Your bid
                   const TextField(
                     decoration: InputDecoration(
                       hintText: "Your bid",
@@ -126,8 +117,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                     ),
                   ),
                   const SizedBox(height: 6),
-
-                  // Bid Button
                   SizedBox(
                     width: double.infinity,
                     height: 28,

@@ -1,4 +1,3 @@
-// lib/live_auctions.dart
 import 'package:flutter/material.dart';
 
 class LiveAuctions extends StatefulWidget {
@@ -9,7 +8,6 @@ class LiveAuctions extends StatefulWidget {
 }
 
 class _LiveAuctionsState extends State<LiveAuctions> {
-  // Sample data: the items the bidder has bid on
   List<Map<String, dynamic>> bidderBids = [
     {
       "itemName": "Luxury Watch",
@@ -58,7 +56,6 @@ class _LiveAuctionsState extends State<LiveAuctions> {
                 final bid = bidderBids[index];
                 Color statusColor = const Color(0xFFA3B18A);
 
-                // Choose color based on bid status
                 switch (bid['status']) {
                   case "Leading":
                     statusColor = Colors.green;

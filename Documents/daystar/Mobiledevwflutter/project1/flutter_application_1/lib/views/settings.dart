@@ -16,65 +16,59 @@ class _SettingsState extends State<Settings> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5E6D3),
       appBar: AppBar(
-        title: const Text("Settings"),
+        title: const Text("Settings",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
         backgroundColor: const Color(0xFFD2B48C),
+        elevation: 0,
       ),
-      body: ListView(
+      body: Column(
         children: [
-          SwitchListTile(
-            title: const Text("Dark Mode"),
-            secondary: const Icon(Icons.dark_mode),
-            value: darkMode,
-            onChanged: (value) {
-              setState(() {
-                darkMode = value;
-              });
-            },
-          ),
-          SwitchListTile(
-            title: const Text("Notifications"),
-            secondary: const Icon(Icons.notifications),
-            value: notifications,
-            onChanged: (value) {
-              setState(() {
-                notifications = value;
-              });
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text("Delete Account"),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Delete Account"),
-                  content: const Text(
-                      "Are you sure you want to permanently delete your account?"),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Delete",
-                          style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
+          const SizedBox(height: 20),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text("Dark Mode"),
+                  value: darkMode,
+                  onChanged: (v) => setState(() => darkMode = v),
                 ),
-              );
-            },
+                SwitchListTile(
+                  title: const Text("Notifications"),
+                  value: notifications,
+                  onChanged: (v) => setState(() => notifications = v),
+                ),
+              ],
+            ),
           ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text("Logout"),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/');
-            },
+          const SizedBox(height: 16),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text("Delete Account"),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text("Logout"),
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, '/');
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),

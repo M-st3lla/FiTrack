@@ -16,10 +16,7 @@ class SignUpPage extends StatelessWidget {
           child: Column(
             children: [
               Image.asset("assets/calendar.jpg", height: 100, width: 100),
-
               const SizedBox(height: 30),
-
-              // USERNAME
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
                 child: Row(
@@ -30,7 +27,6 @@ class SignUpPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               TextField(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
@@ -39,10 +35,7 @@ class SignUpPage extends StatelessWidget {
                   prefixIcon: const Icon(Icons.person),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // EMAIL
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
                 child: Row(
@@ -53,7 +46,6 @@ class SignUpPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               TextField(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
@@ -62,10 +54,7 @@ class SignUpPage extends StatelessWidget {
                   prefixIcon: const Icon(Icons.email),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // PASSWORD
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
                 child: Row(
@@ -76,7 +65,6 @@ class SignUpPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
@@ -86,10 +74,7 @@ class SignUpPage extends StatelessWidget {
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: const Icon(Icons.visibility_off)),
               ),
-
               const SizedBox(height: 20),
-
-              // CONFIRM PASSWORD
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
                 child: Row(
@@ -100,7 +85,6 @@ class SignUpPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
@@ -110,10 +94,7 @@ class SignUpPage extends StatelessWidget {
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: const Icon(Icons.visibility_off)),
               ),
-
               const SizedBox(height: 30),
-
-              // SIGN UP BUTTON
               Container(
                 height: 50,
                 alignment: Alignment.center,
@@ -123,10 +104,7 @@ class SignUpPage extends StatelessWidget {
                 child: const Text("Sign Up",
                     style: TextStyle(color: Colors.white)),
               ),
-
               const SizedBox(height: 15),
-
-              // BACK TO LOGIN
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
