@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/logincontroller.dart';
 
-LoginController loginController = Get.put(LoginController());
+final LoginController loginController = Get.put(LoginController());
+
 TextEditingController usernameController = TextEditingController();
 TextEditingController passwordController = TextEditingController();
 
@@ -14,6 +15,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,147 +38,133 @@ class LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset(
-                "assets/branding2.png",
-                height: 300,
-              ),
+              Image.asset("assets/branding2.png", height: 300),
               const SizedBox(height: 5),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 0, 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Enter username",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w300,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
+
+              // Username
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("Enter username", style: TextStyle(fontSize: 16)),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: usernameController,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  hintText: "Use email or phone number",
-                  hintStyle: const TextStyle(
-                      color: Color.fromARGB(255, 181, 134, 108),
-                      fontWeight: FontWeight.w300),
+                      borderRadius: BorderRadius.circular(20)),
+                  hintText: "Enter your username",
                   prefixIcon: const Icon(Icons.person),
                 ),
               ),
+
               const SizedBox(height: 30),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Enter password",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ],
-                ),
+
+              // Password
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("Enter password", style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 10),
-              Obx(
-                () => TextField(
-                  controller: passwordController,
-                  obscureText: !loginController.isPasswordVisible.value,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    hintText: "Use a strong password",
-                    hintStyle: const TextStyle(
-                        color: Color.fromARGB(255, 181, 134, 108),
-                        fontWeight: FontWeight.w300),
-                    suffixIcon: GestureDetector(
-                      child: Icon(
-                        loginController.isPasswordVisible.value
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onTap: () {
-                        loginController.togglePassword();
-                      },
-                    ),
-                    prefixIcon: const Icon(Icons.lock),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              GestureDetector(
-                  child: Container(
-                    height: 50,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF563225),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  onTap: () {
-                    bool success = loginController.login(
-                        usernameController.text, passwordController.text);
-                    if (success) {
-                      Get.offAndToNamed("/dashboard");
-                    } else {
-                      Get.snackbar(
-                        "Login Failed",
-                        "Invalid username or password",
-                      );
-                    }
-                  }),
-              const SizedBox(height: 15),
-              Column(
-                children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Forgot password?"),
-                      SizedBox(width: 5),
-                      Text(
-                        "Reset password",
-                        style: TextStyle(
-                          color: Color(0xFFC1957D),
-                          fontWeight: FontWeight.w700,
+
+              Obx(() => TextField(
+                    controller: passwordController,
+                    obscureText: !loginController.isPasswordVisible.value,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      hintText: "Enter your password",
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          loginController.isPasswordVisible.value
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      const SizedBox(width: 5),
-                      GestureDetector(
-                        onTap: () {
-                          Get.toNamed("/signup");
+                        onPressed: () {
+                          loginController.togglePassword();
                         },
-                        child: const Text(
-                          "Sign up",
-                          style: TextStyle(
-                            color: Color(0xFFC1957D),
-                            fontWeight: FontWeight.w700,
-                          ),
+                      ),
+                    ),
+                  )),
+
+              const SizedBox(height: 30),
+
+              // Login Button
+              Obx(() => SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: loginController.isLoading.value
+                          ? null
+                          : () async {
+                              final username = usernameController.text.trim();
+                              final password = passwordController.text;
+
+                              if (username.isEmpty || password.isEmpty) {
+                                _showSnack("Please fill in all fields");
+                                return;
+                              }
+
+                              bool success = await loginController.login(
+                                  username, password);
+
+                              if (success) {
+                                _showSnack("Login successful!");
+                                Get.offAllNamed("/dashboard");
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF563225),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                    ],
+                      child: loginController.isLoading.value
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Login"),
+                    ),
+                  )),
+
+              const SizedBox(height: 15),
+
+              // Links
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Forgot password?"),
+                  SizedBox(width: 5),
+                  Text(
+                    "Reset password",
+                    style: TextStyle(
+                      color: Color(0xFFC1957D),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
-              )
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account?"),
+                  const SizedBox(width: 5),
+                  GestureDetector(
+                    onTap: () {
+                      Get.toNamed("/signup");
+                    },
+                    child: const Text(
+                      "Sign up",
+                      style: TextStyle(
+                        color: Color(0xFFC1957D),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
