@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AuctionItems extends StatefulWidget {
   const AuctionItems({super.key});
@@ -19,44 +21,16 @@ class _AuctionItemsState extends State<AuctionItems> {
   @override
   void initState() {
     super.initState();
+    fetchAuctionItems();
 
-    // Add endTime for countdown timer
-    allItems = [
-      {
-        "name": "Watch",
-        "price": "25,000",
-        "bid": "31,500",
-        "img": "assets/watch.jpeg",
-        "endTime": DateTime.now().add(const Duration(hours: 2, minutes: 15)),
-      },
-      {
-        "name": "Car",
-        "price": "2,500,000",
-        "bid": "2,750,000",
-        "img": "assets/Corvette.jpeg",
-        "endTime": DateTime.now().add(const Duration(hours: 5, minutes: 10)),
-      },
-      {
-        "name": "Necklace",
-        "price": "80,000",
-        "bid": "92,000",
-        "img": "assets/18k Gold Plated Neckpiece.jpeg",
-        "endTime": DateTime.now().add(const Duration(hours: 1, minutes: 45)),
-      },
-      {
-        "name": "Painting",
-        "price": "45,000",
-        "bid": "53,000",
-        "img": "assets/Girl in pink dress, 1928, by Laura Wheeler Waring.jpeg",
-        "endTime": DateTime.now().add(const Duration(minutes: 50)),
-      },
-    ];
-
-    displayedItems = List.from(allItems);
-
-    // Update countdowns every second
+    // updates the countdown every second
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {});
+    });
+
+    // re-fetches from server every 5 seconds so everyone sees the latest bid
+    Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) fetchAuctionItems();
     });
   }
 
@@ -66,7 +40,43 @@ class _AuctionItemsState extends State<AuctionItems> {
     super.dispose();
   }
 
-  // SEARCH FUNCTION
+  // ── FORMAT PRICE WITH COMMAS ──────────────────────────────────────────────
+  String _formatPrice(dynamic value) {
+    if (value == null) return "0";
+    final number = double.tryParse(value.toString()) ?? 0;
+    return number.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+$)'),
+          (match) => '${match[1]},',
+        );
+  }
+
+  // ── YOUR FETCH ALGO ───────────────────────────────────────────────────────
+  fetchAuctionItems() async {
+    var response = await http
+        .get(Uri.parse('http://localhost/vintageauctions/getauctions.php'));
+
+    if (response.statusCode == 200) {
+      var serverData = jsonDecode(response.body);
+      List<Map<String, dynamic>> fetched = [];
+      for (var item in serverData) {
+        fetched.add({
+          "id": item["id"],
+          "name": item["title"],
+          "price": _formatPrice(item["starting_price"]),
+          "bid": _formatPrice(item["highest_bid"]),
+          "img": item["image_url"] ?? "",
+          "endTime": DateTime.tryParse(item["end_date"] ?? "") ??
+              DateTime.now().add(const Duration(hours: 1)),
+        });
+      }
+      setState(() {
+        allItems = fetched;
+        displayedItems = List.from(fetched);
+      });
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   void filterItems(String query) {
     final results = allItems.where((item) {
       final name = item["name"]!.toLowerCase();
@@ -78,17 +88,61 @@ class _AuctionItemsState extends State<AuctionItems> {
     });
   }
 
-  // COUNTDOWN FUNCTION
   String getTimeLeft(DateTime endTime) {
     final difference = endTime.difference(DateTime.now());
 
     if (difference.isNegative) return "Ended";
 
-    final hours = difference.inHours;
+    final days = difference.inDays;
+    final hours = difference.inHours % 24;
     final minutes = difference.inMinutes % 60;
     final seconds = difference.inSeconds % 60;
 
-    return "${hours}h ${minutes}m ${seconds}s";
+    return "${days}d ${hours}h ${minutes}m ${seconds}s";
+  }
+
+  Future<void> _submitBid(
+      Map<String, dynamic> item, TextEditingController controller) async {
+    final value = double.tryParse(controller.text.trim());
+    final currentBid =
+        double.tryParse(item["bid"].toString().replaceAll(',', '')) ?? 0;
+
+    if (value == null || value <= 0) {
+      _showSnack('Please enter a valid bid amount.');
+      return;
+    }
+    if (value <= currentBid) {
+      _showSnack('Your bid must be higher than Ksh ${item["bid"]}.');
+      return;
+    }
+
+    const int loggedInUserId = 1; // replace with real session user ID later
+
+    try {
+      final response = await http
+          .get(Uri.parse(
+            'http://localhost/vintageauctions/placebids.php'
+            '?item_id=${item["id"]}&user_id=$loggedInUserId&bid_amt=$value',
+          ))
+          .timeout(const Duration(seconds: 10));
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        _showSnack('Bid of Ksh $value placed on ${item["name"]}!');
+        controller.clear();
+        fetchAuctionItems();
+      } else {
+        _showSnack(data['error'] ?? 'Bid failed.');
+      }
+    } catch (e) {
+      _showSnack('Network error: $e');
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -102,7 +156,6 @@ class _AuctionItemsState extends State<AuctionItems> {
       ),
       body: Column(
         children: [
-          // SEARCH BAR
           Padding(
             padding: const EdgeInsets.all(10),
             child: TextField(
@@ -118,8 +171,6 @@ class _AuctionItemsState extends State<AuctionItems> {
               ),
             ),
           ),
-
-          // ITEMS GRID
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(10),
@@ -132,6 +183,7 @@ class _AuctionItemsState extends State<AuctionItems> {
               ),
               itemBuilder: (context, i) {
                 final item = displayedItems[i];
+                final bidController = TextEditingController();
 
                 return Container(
                   padding: const EdgeInsets.all(8),
@@ -144,14 +196,44 @@ class _AuctionItemsState extends State<AuctionItems> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            image: DecorationImage(
-                              image: AssetImage(item["img"]!),
-                              fit: BoxFit.cover,
+                        child: GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => Dialog(
+                                backgroundColor: Colors.black,
+                                insetPadding: const EdgeInsets.all(10),
+                                child: InteractiveViewer(
+                                  child: Image.network(
+                                    item["img"]!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.broken_image,
+                                        size: 60,
+                                        color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            alignment: Alignment.topCenter,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey.shade300,
+                              image: (item["img"] as String).isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(item["img"]!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                             ),
+                            child: (item["img"] as String).isEmpty
+                                ? const Center(
+                                    child: Icon(Icons.image_not_supported,
+                                        color: Colors.grey))
+                                : null,
                           ),
                         ),
                       ),
@@ -181,7 +263,6 @@ class _AuctionItemsState extends State<AuctionItems> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // COUNTDOWN TIMER
                       Text(
                         "Ends in: ${getTimeLeft(item["endTime"])}",
                         style: const TextStyle(
@@ -190,8 +271,10 @@ class _AuctionItemsState extends State<AuctionItems> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextField(
+                        controller: bidController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
                           hintText: "Your bid",
                           contentPadding:
                               EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -206,7 +289,7 @@ class _AuctionItemsState extends State<AuctionItems> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: vintageBrown,
                           ),
-                          onPressed: () {},
+                          onPressed: () => _submitBid(item, bidController),
                           child: const Text(
                             "Bid",
                             style: TextStyle(

@@ -6,12 +6,15 @@ class LoginController extends GetxController {
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
+  // Store logged-in user info here
+  var userId = 0.obs;
+  var loggedInUsername = ''.obs;
+
   void togglePassword() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
   Future<bool> login(String username, String password) async {
-    // 1️⃣ Basic validation
     if (username.isEmpty || password.isEmpty) {
       Get.snackbar("Error", "Please fill in all fields");
       return false;
@@ -27,6 +30,9 @@ class LoginController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == 1) {
+        // Save user identity from PHP response
+        userId.value = data['user_id'];
+        loggedInUsername.value = data['username'];
         return true;
       } else {
         Get.snackbar("Login Failed", data['error'] ?? "Invalid credentials");
