@@ -23,12 +23,10 @@ class _AuctionItemsState extends State<AuctionItems> {
     super.initState();
     fetchAuctionItems();
 
-    // updates the countdown every second
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {});
     });
 
-    // re-fetches from server every 5 seconds so everyone sees the latest bid
     Timer.periodic(const Duration(seconds: 5), (_) {
       if (mounted) fetchAuctionItems();
     });
@@ -40,7 +38,6 @@ class _AuctionItemsState extends State<AuctionItems> {
     super.dispose();
   }
 
-  // ── FORMAT PRICE WITH COMMAS ──────────────────────────────────────────────
   String _formatPrice(dynamic value) {
     if (value == null) return "0";
     final number = double.tryParse(value.toString()) ?? 0;
