@@ -27,18 +27,24 @@ class LoginController extends GetxController {
         'http://localhost/vintageauctions/login.php?username=$username&password=$password',
       ));
 
+      // 🔥 ADD THIS LINE
+      print("LOGIN RESPONSE: ${response.body}");
+
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == 1) {
-        // Save user identity from PHP response
-        userId.value = data['user_id'];
+        userId.value = int.tryParse(data['user_id'].toString()) ?? 0;
         loggedInUsername.value = data['username'];
+
+        print("LOGIN SUCCESS: userId = ${userId.value}");
+
         return true;
       } else {
         Get.snackbar("Login Failed", data['error'] ?? "Invalid credentials");
         return false;
       }
     } catch (e) {
+      print("LOGIN ERROR: $e");
       Get.snackbar("Error", "Server connection failed");
       return false;
     } finally {

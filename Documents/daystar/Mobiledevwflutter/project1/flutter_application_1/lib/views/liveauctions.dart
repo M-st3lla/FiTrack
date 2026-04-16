@@ -33,7 +33,7 @@ class _LiveAuctionsState extends State<LiveAuctions> {
     try {
       final userId = loginController.userId.value;
       final response = await http.get(Uri.parse(
-        'http://localhost/vintageauctions/get_my_bids.php?user_id=$userId',
+        'http://10.7.28.211/vintageauctions/get_my_bids.php?user_id=$userId',
       ));
 
       final data = jsonDecode(response.body);
