@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/logincontroller.dart';
 
-final LoginController loginController = Get.put(LoginController());
-
-TextEditingController usernameController = TextEditingController();
-TextEditingController passwordController = TextEditingController();
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,6 +10,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
+  final LoginController loginController = Get.put(LoginController());
+
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
@@ -47,11 +47,13 @@ class LoginScreenState extends State<LoginScreen> {
                 child: Text("Enter username", style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 10),
+
               TextField(
                 controller: usernameController,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   hintText: "Enter your username",
                   prefixIcon: const Icon(Icons.person),
                 ),
@@ -71,7 +73,8 @@ class LoginScreenState extends State<LoginScreen> {
                     obscureText: !loginController.isPasswordVisible.value,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       hintText: "Enter your password",
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
@@ -89,7 +92,7 @@ class LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 30),
 
-              // Login Button
+              // LOGIN BUTTON (FIXED)
               Obx(() => SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -108,8 +111,17 @@ class LoginScreenState extends State<LoginScreen> {
                               bool success = await loginController.login(
                                   username, password);
 
+                              // 🔥 SAFETY CHECK AFTER ASYNC
+                              if (!mounted) return;
+
                               if (success) {
+                                usernameController.clear();
+                                passwordController.clear();
+
                                 _showSnack("Login successful!");
+
+                                loginController.isLoading.value = false;
+
                                 Get.offAllNamed("/dashboard");
                               }
                             },
@@ -128,7 +140,7 @@ class LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 15),
 
-              // Links
+              // LINKS
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

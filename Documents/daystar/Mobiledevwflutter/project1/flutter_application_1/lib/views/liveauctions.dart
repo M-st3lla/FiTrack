@@ -33,7 +33,7 @@ class _LiveAuctionsState extends State<LiveAuctions> {
     try {
       final userId = loginController.userId.value;
       final response = await http.get(Uri.parse(
-        'http://10.7.28.211/vintageauctions/get_my_bids.php?user_id=$userId',
+        'http://localhost/vintageauctions/get_my_bids.php?user_id=$userId',
       ));
 
       final data = jsonDecode(response.body);
@@ -58,6 +58,36 @@ class _LiveAuctionsState extends State<LiveAuctions> {
     }
   }
 
+  Color _statusColor(String status) {
+    switch (status) {
+      case "Leading":
+        return Colors.green;
+      case "Outbid":
+        return Colors.orange;
+      case "Won":
+        return Colors.blue;
+      case "Lost":
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case "Leading":
+        return Icons.trending_up;
+      case "Outbid":
+        return Icons.trending_down;
+      case "Won":
+        return Icons.emoji_events;
+      case "Lost":
+        return Icons.close;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,11 +99,17 @@ class _LiveAuctionsState extends State<LiveAuctions> {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 28,
+                fontSize: 24,
               ),
             )),
         backgroundColor: const Color.fromARGB(255, 167, 180, 146),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: fetchMyBids,
+          )
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -102,54 +138,114 @@ class _LiveAuctionsState extends State<LiveAuctions> {
                   : RefreshIndicator(
                       onRefresh: fetchMyBids,
                       child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 19),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         itemCount: bidderBids.length,
                         itemBuilder: (context, index) {
                           final bid = bidderBids[index];
-
-                          Color statusColor;
-                          switch (bid['status']) {
-                            case "Leading":
-                              statusColor = Colors.green;
-                              break;
-                            case "Outbid":
-                              statusColor = Colors.red;
-                              break;
-                            case "Won":
-                              statusColor = Colors.blue;
-                              break;
-                            default:
-                              statusColor = Colors.grey;
-                          }
+                          final status = bid['bidStatus'] ?? 'Unknown';
+                          final color = _statusColor(status);
 
                           return Card(
                             color: Colors.white,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            elevation: 3,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            elevation: 4,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            child: ListTile(
-                              title: Text(
-                                bid['itemName'],
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Your Bid: Ksh ${bid['yourBid']}"),
-                                  Text("Current Bid: Ksh ${bid['currentBid']}"),
+                                  // Item name + status badge
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          bid['itemName'] ?? 'Unknown Item',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 17,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(color: color),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(_statusIcon(status),
+                                                size: 14, color: color),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              status,
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 6),
+
+                                  // Description
+                                  if (bid['description'] != null &&
+                                      bid['description'].toString().isNotEmpty)
+                                    Text(
+                                      bid['description'],
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+
+                                  const SizedBox(height: 10),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 10),
+
+                                  // Bid details row
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _infoTile(
+                                        label: "Your Bid",
+                                        value: "Ksh ${bid['yourBid']}",
+                                        valueColor: Colors.black87,
+                                      ),
+                                      _infoTile(
+                                        label: "Highest Bid",
+                                        value: "Ksh ${bid['currentBid']}",
+                                        valueColor: bid['yourBid'].toString() ==
+                                                bid['currentBid'].toString()
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                      _infoTile(
+                                        label: "Bid Time",
+                                        value:
+                                            _formatTime(bid['bid_time'] ?? ''),
+                                        valueColor: Colors.grey[700]!,
+                                      ),
+                                    ],
+                                  ),
                                 ],
-                              ),
-                              trailing: Text(
-                                bid['status'],
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
                               ),
                             ),
                           );
@@ -157,5 +253,30 @@ class _LiveAuctionsState extends State<LiveAuctions> {
                       ),
                     ),
     );
+  }
+
+  Widget _infoTile(
+      {required String label,
+      required String value,
+      required Color valueColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: valueColor)),
+      ],
+    );
+  }
+
+  String _formatTime(String rawTime) {
+    try {
+      final dt = DateTime.parse(rawTime);
+      return "${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return rawTime;
+    }
   }
 }

@@ -53,7 +53,8 @@ class _AuctionItemsState extends State<AuctionItems> {
     return ['All', ...cats];
   }
 
-  final LoginController loginController = Get.find<LoginController>();
+  LoginController? get loginController =>
+      Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
 
   final Color vintageBrown = const Color(0xFFF7E7CB);
   final Color sageGreen = const Color(0xFFA3B18A);
@@ -61,10 +62,13 @@ class _AuctionItemsState extends State<AuctionItems> {
   @override
   void initState() {
     super.initState();
-    print("CURRENT USER ID: ${loginController.userId.value}");
+    print("CURRENT USER ID: ${loginController?.userId.value ?? 0}");
+
     fetchAuctionItems();
     fetchTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (mounted) fetchAuctionItems();
+      if (!mounted) return;
+      if (!Get.isRegistered<LoginController>()) return;
+      fetchAuctionItems();
     });
   }
 
@@ -177,14 +181,14 @@ class _AuctionItemsState extends State<AuctionItems> {
   // ── Place bid ─────────────────────────────────────────────────────────────
 
   Future<void> _submitBid(Map<String, dynamic> item, String bidText) async {
-    print("CURRENT USER ID: ${loginController.userId.value}");
+    print("CURRENT USER ID: ${loginController?.userId.value ?? 0}");
     final cleaned = bidText.replaceAll(RegExp(r'[^0-9.]'), '');
     final value = double.tryParse(cleaned);
     final double currentBid = item["rawBid"] as double? ?? 0.0;
 
     debugPrint('BID INPUT: "$bidText" → cleaned: "$cleaned" → parsed: $value');
     debugPrint(
-        'item_id: ${item["id"]} | user_id: ${loginController.userId.value} | currentBid: $currentBid');
+        'item_id: ${item["id"]} | user_id: ${loginController?.userId.value ?? 0} | currentBid: $currentBid');
 
     if (value == null || value <= 0) {
       _showSnack('Please enter a valid bid amount.');
@@ -195,7 +199,7 @@ class _AuctionItemsState extends State<AuctionItems> {
       return;
     }
 
-    final int loggedInUserId = loginController.userId.value;
+    final int loggedInUserId = loginController?.userId.value ?? 0;
     if (loggedInUserId <= 0) {
       _showSnack('You must be logged in to place a bid.');
       return;
