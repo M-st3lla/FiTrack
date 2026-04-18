@@ -12,8 +12,6 @@ class AuctionItems extends StatefulWidget {
   State<AuctionItems> createState() => _AuctionItemsState();
 }
 
-// ── Sort options ──────────────────────────────────────────────────────────────
-
 enum _SortOption { newest, endingSoon, priceLow, priceHigh }
 
 extension _SortLabel on _SortOption {
@@ -35,11 +33,10 @@ class _AuctionItemsState extends State<AuctionItems> {
   List<Map<String, dynamic>> allItems = [];
   List<Map<String, dynamic>> displayedItems = [];
   Timer? fetchTimer;
-  bool _isFetching = false; // ← guard flag
+  bool _isFetching = false;
 
   final Map<dynamic, String> _bidValues = {};
 
-  // ── Sort & filter state ───────────────────────────────────────────────────
   String _searchQuery = '';
   _SortOption _sortOption = _SortOption.newest;
   String _selectedCategory = 'All';
@@ -88,7 +85,7 @@ class _AuctionItemsState extends State<AuctionItems> {
   }
 
   fetchAuctionItems() async {
-    if (_isFetching) return; // ← skip if already running
+    if (_isFetching) return;
     _isFetching = true;
     try {
       var response = await http
@@ -128,22 +125,18 @@ class _AuctionItemsState extends State<AuctionItems> {
     } catch (e) {
       debugPrint('fetchAuctionItems error: $e');
     } finally {
-      _isFetching = false; // ← always release the lock
+      _isFetching = false;
     }
   }
-
-  // ── Filter + sort logic ───────────────────────────────────────────────────
 
   void _applyFilters() {
     if (!mounted) return;
     List<Map<String, dynamic>> result = List.from(allItems);
 
-    // Category
     if (_selectedCategory != 'All') {
       result = result.where((i) => i['category'] == _selectedCategory).toList();
     }
 
-    // Search
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       result = result
@@ -151,7 +144,6 @@ class _AuctionItemsState extends State<AuctionItems> {
           .toList();
     }
 
-    // Sort
     switch (_sortOption) {
       case _SortOption.newest:
         result.sort((a, b) => (b['id'] as int).compareTo(a['id'] as int));
@@ -177,8 +169,6 @@ class _AuctionItemsState extends State<AuctionItems> {
     _searchQuery = query;
     _applyFilters();
   }
-
-  // ── Place bid ─────────────────────────────────────────────────────────────
 
   Future<void> _submitBid(Map<String, dynamic> item, String bidText) async {
     print("CURRENT USER ID: ${loginController?.userId.value ?? 0}");
@@ -218,7 +208,6 @@ class _AuctionItemsState extends State<AuctionItems> {
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
-        // Update card immediately
         setState(() {
           final idx = allItems.indexWhere((i) => i["id"] == item["id"]);
           if (idx != -1) {
@@ -230,7 +219,6 @@ class _AuctionItemsState extends State<AuctionItems> {
         _showSnack(
             'Bid of Ksh ${_formatPrice(value)} placed on ${item["name"]}!');
         _bidValues[item["id"]] = '';
-        // ← fetchAuctionItems() removed; timer handles the refresh
       } else {
         _showSnack(data['error'] ?? 'Bid failed.');
       }
@@ -244,8 +232,6 @@ class _AuctionItemsState extends State<AuctionItems> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,7 +243,6 @@ class _AuctionItemsState extends State<AuctionItems> {
       ),
       body: Column(
         children: [
-          // ── Search bar ─────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(10),
             child: TextField(
@@ -273,8 +258,6 @@ class _AuctionItemsState extends State<AuctionItems> {
               ),
             ),
           ),
-
-          // ── Sort & Filter bar ──────────────────────────────────────────
           _SortFilterBar(
             sortOption: _sortOption,
             selectedCategory: _selectedCategory,
@@ -290,8 +273,6 @@ class _AuctionItemsState extends State<AuctionItems> {
               _applyFilters();
             },
           ),
-
-          // ── Grid ───────────────────────────────────────────────────────
           Expanded(
             child: displayedItems.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -395,21 +376,19 @@ class _AuctionItemsState extends State<AuctionItems> {
                                 hintText: "Min: Ksh ${item["bid"]}",
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 10,
-                                  vertical: 8, // ✅ FIXED (was too tight)
+                                  vertical: 8,
                                 ),
                                 border: const OutlineInputBorder(),
                               ),
                             ),
                             const SizedBox(height: 8),
-
-// ✅ Button (NO fixed height — lets Flutter size it correctly)
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: vintageBrown,
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10), // ✅ proper height
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -421,8 +400,7 @@ class _AuctionItemsState extends State<AuctionItems> {
                                   "Bid",
                                   style: TextStyle(
                                     color: Color(0xFFB3684D),
-                                    fontSize:
-                                        16, // ✅ slightly reduced to avoid overflow
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -439,8 +417,6 @@ class _AuctionItemsState extends State<AuctionItems> {
     );
   }
 }
-
-// ── Sort & Filter bar ─────────────────────────────────────────────────────────
 
 class _SortFilterBar extends StatelessWidget {
   final _SortOption sortOption;
@@ -529,8 +505,6 @@ class _SortFilterBar extends StatelessWidget {
     );
   }
 }
-
-// ── Countdown widget ──────────────────────────────────────────────────────────
 
 class _CountdownText extends StatefulWidget {
   final DateTime endTime;

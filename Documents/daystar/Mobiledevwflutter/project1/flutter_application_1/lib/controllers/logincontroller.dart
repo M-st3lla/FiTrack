@@ -20,11 +20,6 @@ class LoginController extends GetxController {
     isLoading.value = false;
     isPasswordVisible.value = false;
 
-    // 🔥 IMPORTANT: remove controller safely from memory
-    if (Get.isRegistered<LoginController>()) {
-      Get.delete<LoginController>(force: true);
-    }
-
     // 🔥 ALWAYS RESET NAVIGATION CLEANLY
     Get.offAllNamed("/login");
   }

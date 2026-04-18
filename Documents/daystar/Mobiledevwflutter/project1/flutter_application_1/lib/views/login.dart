@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
-  final LoginController loginController = Get.put(LoginController());
+  final LoginController loginController = Get.find<LoginController>();
 
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
