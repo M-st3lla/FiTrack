@@ -6,21 +6,25 @@ class LoginController extends GetxController {
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
+  // 🔥 USER DATA
   var userId = 0.obs;
   var loggedInUsername = ''.obs;
+  var fullName = ''.obs;
+  var email = ''.obs;
 
   void togglePassword() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  // ✅ SAFE LOGOUT (FIXED)
+  // ✅ CLEAN LOGOUT
   void logout() {
     userId.value = 0;
     loggedInUsername.value = '';
+    fullName.value = '';
+    email.value = '';
     isLoading.value = false;
     isPasswordVisible.value = false;
 
-    // 🔥 ALWAYS RESET NAVIGATION CLEANLY
     Get.offAllNamed("/login");
   }
 
@@ -45,11 +49,18 @@ class LoginController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == 1) {
+        // ✅ STORE USER DATA
         userId.value = int.tryParse(data['user_id'].toString()) ?? 0;
-
         loggedInUsername.value = data['username'] ?? '';
 
-        print("LOGIN SUCCESS: userId = ${userId.value}");
+        // 🔥 THESE TWO ARE WHAT YOU WERE MISSING
+        fullName.value = data['full_name'] ?? '';
+        email.value = data['email'] ?? '';
+
+        print("LOGIN SUCCESS:");
+        print("UserID: ${userId.value}");
+        print("Full Name: ${fullName.value}");
+        print("Email: ${email.value}");
 
         return true;
       } else {

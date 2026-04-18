@@ -94,14 +94,13 @@ class _LiveAuctionsState extends State<LiveAuctions> {
       backgroundColor: const Color.fromARGB(255, 167, 180, 146),
       appBar: AppBar(
         centerTitle: true,
-        title: Obx(() => Text(
-              "${loginController.loggedInUsername.value}'s Live Bids",
-              style: const TextStyle(
-                color: Colors.white,
+        title: const Text("My Live Bids",
+            style: TextStyle(
+                fontFamily: 'Georgia',
+                letterSpacing: 1.0,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
-              ),
-            )),
+                color: Colors.white)),
         backgroundColor: const Color.fromARGB(255, 167, 180, 146),
         elevation: 0,
         actions: [
