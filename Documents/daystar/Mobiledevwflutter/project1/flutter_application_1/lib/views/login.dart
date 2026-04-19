@@ -28,8 +28,6 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ── Shared helpers (mirrored from SignUpPage) ──────────────────────
-
   Widget _elevatedField(Widget child) {
     return Container(
       decoration: BoxDecoration(
@@ -52,11 +50,11 @@ class LoginScreenState extends State<LoginScreen> {
       fillColor: const Color(0xFFF5E6D3),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFF6D4C41), width: 1.2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFF6D4C41), width: 1.2),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -79,7 +77,6 @@ class LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Decorative Header (identical structure to SignUpPage) ──
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
@@ -99,11 +96,10 @@ class LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 16),
-                      // Add this right after the first SizedBox(height: 16) in the header Column:
                       Image.asset(
                         "assets/rebranding.jpeg",
                         colorBlendMode: BlendMode.multiply,
-                        color: Color.fromARGB(255, 230, 199, 173),
+                        color: const Color.fromARGB(255, 230, 199, 173),
                         height: 200,
                         width: 200,
                       ),
@@ -117,8 +113,6 @@ class LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
-                      // Gold rule with diamond centre
                       Row(
                         children: [
                           Expanded(
@@ -157,7 +151,6 @@ class LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
                       const Text(
                         'Vintage Auction House',
@@ -192,16 +185,12 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // ── Form Body ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Username field
                   _elevatedField(TextField(
                     controller: usernameController,
                     decoration:
@@ -209,8 +198,6 @@ class LoginScreenState extends State<LoginScreen> {
                   )),
 
                   const SizedBox(height: 12),
-
-                  // Password field
                   Obx(() => _elevatedField(TextField(
                         controller: passwordController,
                         obscureText: !loginController.isPasswordVisible.value,
@@ -231,8 +218,6 @@ class LoginScreenState extends State<LoginScreen> {
                       ))),
 
                   const SizedBox(height: 10),
-
-                  // Forgot password
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
@@ -252,7 +237,6 @@ class LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 28),
 
-                  // ── Ornament rule ──
                   Row(
                     children: [
                       Expanded(
@@ -294,8 +278,6 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // ── Login button ──
                   Obx(() => Container(
                         width: double.infinity,
                         height: 52,
@@ -390,8 +372,6 @@ class LoginScreenState extends State<LoginScreen> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // ── Footer ornament ──
                   const Center(
                     child: Text(
                       '⚜  ✦  ⚜',

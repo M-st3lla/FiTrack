@@ -40,8 +40,6 @@ class _SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: vintageBrown,
-
-      // ================= APP BAR =================
       appBar: AppBar(
         title: const Text(
           "Settings",
@@ -55,12 +53,10 @@ class _SettingsState extends State<Settings> {
         foregroundColor: beige,
         elevation: 3,
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           children: [
-            // ================= USER CARD =================
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -106,10 +102,7 @@ class _SettingsState extends State<Settings> {
                 ],
               ),
             ),
-
             const SizedBox(height: 22),
-
-            // ================= SECTION TITLE =================
             Row(
               children: [
                 Container(
@@ -132,10 +125,7 @@ class _SettingsState extends State<Settings> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
-            // ================= SETTINGS CARD =================
             Container(
               decoration: _elegantCard(),
               child: Column(
@@ -186,10 +176,7 @@ class _SettingsState extends State<Settings> {
                 ],
               ),
             ),
-
             const SizedBox(height: 18),
-
-            // ================= INFO PANEL =================
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -214,10 +201,7 @@ class _SettingsState extends State<Settings> {
                 ),
               ),
             ),
-
             const Spacer(),
-
-            // ================= LOGOUT =================
             Container(
               width: double.infinity,
               height: 52,

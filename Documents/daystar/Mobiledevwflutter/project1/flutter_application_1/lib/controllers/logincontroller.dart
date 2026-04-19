@@ -1,22 +1,51 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
   var isPasswordVisible = false.obs;
   var isLoading = false.obs;
 
-  // 🔥 USER DATA
   var userId = 0.obs;
   var loggedInUsername = ''.obs;
   var fullName = ''.obs;
   var email = ''.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    _loadUserFromPrefs();
+  }
+
+  Future<void> _loadUserFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    userId.value = prefs.getInt('userId') ?? 0;
+    loggedInUsername.value = prefs.getString('loggedInUsername') ?? '';
+    fullName.value = prefs.getString('fullName') ?? '';
+    email.value = prefs.getString('email') ?? '';
+  }
+
+  Future<void> _saveUserToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('userId', userId.value);
+    await prefs.setString('loggedInUsername', loggedInUsername.value);
+    await prefs.setString('fullName', fullName.value);
+    await prefs.setString('email', email.value);
+  }
+
+  Future<void> _clearUserFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userId');
+    await prefs.remove('loggedInUsername');
+    await prefs.remove('fullName');
+    await prefs.remove('email');
+  }
+
   void togglePassword() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  // ✅ CLEAN LOGOUT
   void logout() {
     userId.value = 0;
     loggedInUsername.value = '';
@@ -24,6 +53,8 @@ class LoginController extends GetxController {
     email.value = '';
     isLoading.value = false;
     isPasswordVisible.value = false;
+
+    _clearUserFromPrefs();
 
     Get.offAllNamed("/login");
   }
@@ -44,23 +75,14 @@ class LoginController extends GetxController {
           ))
           .timeout(const Duration(seconds: 10));
 
-      print("LOGIN RESPONSE: ${response.body}");
-
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == 1) {
-        // ✅ STORE USER DATA
         userId.value = int.tryParse(data['user_id'].toString()) ?? 0;
         loggedInUsername.value = data['username'] ?? '';
-
-        // 🔥 THESE TWO ARE WHAT YOU WERE MISSING
         fullName.value = data['full_name'] ?? '';
         email.value = data['email'] ?? '';
-
-        print("LOGIN SUCCESS:");
-        print("UserID: ${userId.value}");
-        print("Full Name: ${fullName.value}");
-        print("Email: ${email.value}");
+        await _saveUserToPrefs();
 
         return true;
       } else {
@@ -71,7 +93,6 @@ class LoginController extends GetxController {
         return false;
       }
     } catch (e) {
-      print("LOGIN ERROR: $e");
       Get.snackbar("Error", "Server connection failed");
       return false;
     } finally {

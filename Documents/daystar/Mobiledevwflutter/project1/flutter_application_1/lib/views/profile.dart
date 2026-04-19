@@ -18,31 +18,79 @@ class _ProfileState extends State<Profile> {
   final Color sageGreen = const Color(0xFFA3B18A);
   final Color darkBrown = const Color(0xFF3E2723);
   final Color gold = const Color(0xFFD4AF37);
-  final Color beige = const Color(0xFFFDF6EC); // softened for readability
+  final Color beige = const Color(0xFFFDF6EC);
 
   int bids = 0;
   int wins = 0;
+  bool _statsLoading = true;
+  String? _statsError;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 300), fetchStats);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (loginController.userId.value > 0) {
+        fetchStats();
+      } else {
+        // userId not ready yet — wait for it
+        ever(loginController.userId, (id) {
+          if (id > 0 && _statsLoading) fetchStats();
+        });
+      }
+    });
   }
 
   Future<void> fetchStats() async {
-    final response = await http.get(
-      Uri.parse(
+    final userId = loginController.userId.value;
+
+    if (userId <= 0) {
+      setState(() {
+        _statsError = "User not logged in";
+        _statsLoading = false;
+      });
+      return;
+    }
+
+    try {
+      setState(() {
+        _statsLoading = true;
+        _statsError = null;
+      });
+
+      final uri = Uri.parse(
         'http://localhost/vintageauctions/get_my_bids.php'
-        '?user_id=${loginController.userId.value}&stats=1',
-      ),
-    );
+        '?user_id=$userId&stats=1',
+      );
 
-    final data = jsonDecode(response.body);
+      debugPrint('[Profile] Fetching stats: $uri');
 
-    setState(() {
-      bids = data['bids'] ?? 0;
-      wins = data['wins'] ?? 0;
-    });
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+
+      debugPrint('[Profile] Response status: ${response.statusCode}');
+      debugPrint('[Profile] Response body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        setState(() {
+          _statsError = "Server error (${response.statusCode})";
+          _statsLoading = false;
+        });
+        return;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      setState(() {
+        bids = int.tryParse(data['bids'].toString()) ?? 0;
+        wins = int.tryParse(data['wins'].toString()) ?? 0;
+        _statsLoading = false;
+      });
+    } catch (e) {
+      debugPrint('[Profile] fetchStats error: $e');
+      setState(() {
+        _statsError = "Could not load stats";
+        _statsLoading = false;
+      });
+    }
   }
 
   BoxDecoration _card() {
@@ -68,14 +116,23 @@ class _ProfileState extends State<Profile> {
         children: [
           Icon(icon, color: sageGreen, size: 26),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: darkBrown,
-            ),
-          ),
+          _statsLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: sageGreen,
+                  ),
+                )
+              : Text(
+                  _statsError != null ? '—' : value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: darkBrown,
+                  ),
+                ),
           const SizedBox(height: 4),
           Text(
             label,
@@ -97,7 +154,6 @@ class _ProfileState extends State<Profile> {
         padding: const EdgeInsets.all(80),
         child: Column(
           children: [
-            // ================= PROFILE CARD =================
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -126,28 +182,25 @@ class _ProfileState extends State<Profile> {
                         ),
                       )),
                   const SizedBox(height: 10),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: sageGreen.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      "Vintage Member • ID ${loginController.userId.value}",
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: darkBrown,
-                      ),
-                    ),
-                  ),
+                  Obx(() => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: sageGreen.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "Vintage Member • ID ${loginController.userId.value}",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: darkBrown,
+                          ),
+                        ),
+                      )),
                 ],
               ),
             ),
-
             const SizedBox(height: 22),
-
-            // ================= SECTION TITLE =================
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -159,10 +212,7 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
             ),
-
             const SizedBox(height: 12),
-
-            // ================= STATS =================
             Row(
               children: [
                 Expanded(child: _statCard("Bids", "$bids", Icons.local_offer)),
@@ -170,10 +220,15 @@ class _ProfileState extends State<Profile> {
                 Expanded(child: _statCard("Wins", "$wins", Icons.emoji_events)),
               ],
             ),
-
+            if (_statsError != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _statsError!,
+                style:
+                    TextStyle(color: darkBrown.withOpacity(0.5), fontSize: 12),
+              ),
+            ],
             const Spacer(),
-
-            // ================= LOGOUT =================
             SizedBox(
               width: double.infinity,
               height: 52,

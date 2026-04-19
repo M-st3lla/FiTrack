@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
-import '../controllers/logincontroller.dart';
+import '../controllers/auctionitemscontroller.dart';
 
 class AuctionItems extends StatefulWidget {
   const AuctionItems({super.key});
@@ -30,28 +28,7 @@ extension _SortLabel on _SortOption {
 }
 
 class _AuctionItemsState extends State<AuctionItems> {
-  List<Map<String, dynamic>> allItems = [];
-  List<Map<String, dynamic>> displayedItems = [];
-  Timer? fetchTimer;
-  bool _isFetching = false;
-
-  final Map<dynamic, String> _bidValues = {};
-
-  String _searchQuery = '';
-  _SortOption _sortOption = _SortOption.newest;
-  String _selectedCategory = 'All';
-
-  List<String> get _categories {
-    final cats = allItems
-        .map((e) => (e['category'] ?? 'None') as String)
-        .toSet()
-        .toList()
-      ..sort();
-    return ['All', ...cats];
-  }
-
-  LoginController? get loginController =>
-      Get.isRegistered<LoginController>() ? Get.find<LoginController>() : null;
+  final AuctionController controller = Get.put(AuctionController());
 
   final Color vintageBrown = const Color(0xFFF7E7CB);
   final Color sageGreen = const Color(0xFFA3B18A);
@@ -59,172 +36,7 @@ class _AuctionItemsState extends State<AuctionItems> {
   @override
   void initState() {
     super.initState();
-    print("CURRENT USER ID: ${loginController?.userId.value ?? 0}");
-
-    fetchAuctionItems();
-    fetchTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted) return;
-      if (!Get.isRegistered<LoginController>()) return;
-      fetchAuctionItems();
-    });
-  }
-
-  @override
-  void dispose() {
-    fetchTimer?.cancel();
-    super.dispose();
-  }
-
-  String _formatPrice(dynamic value) {
-    if (value == null) return "0";
-    final number = double.tryParse(value.toString()) ?? 0;
-    return number.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+$)'),
-          (match) => '${match[1]},',
-        );
-  }
-
-  fetchAuctionItems() async {
-    if (_isFetching) return;
-    _isFetching = true;
-    try {
-      var response = await http
-          .get(Uri.parse('http://localhost/vintageauctions/getauctions.php'));
-
-      debugPrint('STATUS: ${response.statusCode}');
-      debugPrint('BODY: ${response.body}');
-
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        var serverData = jsonDecode(response.body);
-        List<Map<String, dynamic>> fetched = [];
-        for (var item in serverData) {
-          fetched.add({
-            "id": int.tryParse(item["id"].toString()) ?? 0,
-            "name": item["title"] ?? "",
-            "price": _formatPrice(item["starting_price"]),
-            "rawPrice":
-                double.tryParse(item["starting_price"]?.toString() ?? "0") ??
-                    0.0,
-            "bid": _formatPrice(item["highest_bid"]),
-            "rawBid":
-                double.tryParse(item["highest_bid"]?.toString() ?? "0") ?? 0.0,
-            "img": item["image_url"] ?? "",
-            "category": item["category"] ?? "None",
-            "endTime": DateTime.tryParse(item["end_date"] ?? "") ??
-                DateTime.now().add(const Duration(hours: 1)),
-          });
-        }
-        if (mounted) {
-          setState(() {
-            allItems = fetched;
-            displayedItems = List.from(fetched);
-          });
-          _applyFilters();
-        }
-      }
-    } catch (e) {
-      debugPrint('fetchAuctionItems error: $e');
-    } finally {
-      _isFetching = false;
-    }
-  }
-
-  void _applyFilters() {
-    if (!mounted) return;
-    List<Map<String, dynamic>> result = List.from(allItems);
-
-    if (_selectedCategory != 'All') {
-      result = result.where((i) => i['category'] == _selectedCategory).toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      result = result
-          .where((i) => (i['name'] as String).toLowerCase().contains(q))
-          .toList();
-    }
-
-    switch (_sortOption) {
-      case _SortOption.newest:
-        result.sort((a, b) => (b['id'] as int).compareTo(a['id'] as int));
-        break;
-      case _SortOption.endingSoon:
-        result.sort((a, b) =>
-            (a['endTime'] as DateTime).compareTo(b['endTime'] as DateTime));
-        break;
-      case _SortOption.priceLow:
-        result.sort(
-            (a, b) => (a['rawBid'] as double).compareTo(b['rawBid'] as double));
-        break;
-      case _SortOption.priceHigh:
-        result.sort(
-            (a, b) => (b['rawBid'] as double).compareTo(a['rawBid'] as double));
-        break;
-    }
-
-    setState(() => displayedItems = result);
-  }
-
-  void filterItems(String query) {
-    _searchQuery = query;
-    _applyFilters();
-  }
-
-  Future<void> _submitBid(Map<String, dynamic> item, String bidText) async {
-    print("CURRENT USER ID: ${loginController?.userId.value ?? 0}");
-    final cleaned = bidText.replaceAll(RegExp(r'[^0-9.]'), '');
-    final value = double.tryParse(cleaned);
-    final double currentBid = item["rawBid"] as double? ?? 0.0;
-
-    debugPrint('BID INPUT: "$bidText" → cleaned: "$cleaned" → parsed: $value');
-    debugPrint(
-        'item_id: ${item["id"]} | user_id: ${loginController?.userId.value ?? 0} | currentBid: $currentBid');
-
-    if (value == null || value <= 0) {
-      _showSnack('Please enter a valid bid amount.');
-      return;
-    }
-    if (value <= currentBid) {
-      _showSnack('Your bid must be higher than Ksh ${item["bid"]}.');
-      return;
-    }
-
-    final int loggedInUserId = loginController?.userId.value ?? 0;
-    if (loggedInUserId <= 0) {
-      _showSnack('You must be logged in to place a bid.');
-      return;
-    }
-
-    final url = Uri.parse(
-      'http://localhost/vintageauctions/placebids.php'
-      '?item_id=${item["id"]}&user_id=$loggedInUserId&bid_amt=$value',
-    );
-
-    debugPrint('REQUEST URL: $url');
-
-    try {
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
-      debugPrint('RESPONSE: ${response.body}');
-      final data = jsonDecode(response.body);
-
-      if (data['success'] == true) {
-        setState(() {
-          final idx = allItems.indexWhere((i) => i["id"] == item["id"]);
-          if (idx != -1) {
-            allItems[idx]["rawBid"] = value;
-            allItems[idx]["bid"] = _formatPrice(value);
-          }
-        });
-        _applyFilters();
-        _showSnack(
-            'Bid of Ksh ${_formatPrice(value)} placed on ${item["name"]}!');
-        _bidValues[item["id"]] = '';
-      } else {
-        _showSnack(data['error'] ?? 'Bid failed.');
-      }
-    } catch (e) {
-      _showSnack('Network error: $e');
-    }
+    controller.fetchAuctionItems();
   }
 
   void _showSnack(String message) {
@@ -246,7 +58,7 @@ class _AuctionItemsState extends State<AuctionItems> {
           Padding(
             padding: const EdgeInsets.all(10),
             child: TextField(
-              onChanged: filterItems,
+              onChanged: controller.filterItems,
               decoration: InputDecoration(
                 hintText: "Search items...",
                 prefixIcon: const Icon(Icons.search),
@@ -258,162 +70,211 @@ class _AuctionItemsState extends State<AuctionItems> {
               ),
             ),
           ),
-          _SortFilterBar(
-            sortOption: _sortOption,
-            selectedCategory: _selectedCategory,
-            categories: _categories,
-            itemCount: displayedItems.length,
-            vintageBrown: vintageBrown,
-            onSortChanged: (v) {
-              setState(() => _sortOption = v);
-              _applyFilters();
-            },
-            onCategoryChanged: (v) {
-              setState(() => _selectedCategory = v);
-              _applyFilters();
-            },
-          ),
+          Obx(() => _SortFilterBar(
+                sortOption:
+                    _SortOption.values[controller.sortOption.value.index],
+                selectedCategory: controller.selectedCategory.value,
+                categories: controller.categories,
+                itemCount: controller.displayedItems.length,
+                vintageBrown: vintageBrown,
+                onSortChanged: (v) {
+                  controller.sortOption.value = SortOption.values[v.index];
+                  controller.applyFilters();
+                },
+                onCategoryChanged: (v) {
+                  controller.selectedCategory.value = v;
+                  controller.applyFilters();
+                },
+              )),
           Expanded(
-            child: displayedItems.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : GridView.builder(
-                    padding: const EdgeInsets.all(10),
-                    itemCount: displayedItems.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 0.65,
-                    ),
-                    itemBuilder: (context, i) {
-                      final item = displayedItems[i];
-                      final itemId = item["id"];
+            child: Obx(() {
+              if (controller.displayedItems.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                      return Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: sageGreen.withOpacity(0.45),
-                          border: Border.all(color: vintageBrown, width: 1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => Dialog(
-                                      backgroundColor: Colors.black,
-                                      insetPadding: const EdgeInsets.all(10),
-                                      child: InteractiveViewer(
-                                        child: Image.network(
-                                          item["img"]!,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.broken_image,
-                                                  size: 60, color: Colors.grey),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  alignment: Alignment.topCenter,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    color: Colors.grey.shade300,
-                                    image: (item["img"] as String).isNotEmpty
-                                        ? DecorationImage(
-                                            image: NetworkImage(item["img"]!),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
-                                  ),
-                                  child: (item["img"] as String).isEmpty
-                                      ? const Center(
-                                          child: Icon(Icons.image_not_supported,
-                                              color: Colors.grey))
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              item["name"]!,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const Divider(color: Colors.black26),
-                            Text(
-                              "Price: Ksh ${item["price"]}",
-                              style: TextStyle(
-                                color: const Color(0xFF703323).withOpacity(0.8),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const Divider(color: Colors.black26),
-                            Text(
-                              "Highest bid: Ksh ${item["bid"]}",
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            _CountdownText(endTime: item["endTime"]),
-                            const SizedBox(height: 6),
-                            TextField(
-                              keyboardType: TextInputType.number,
-                              onChanged: (val) => _bidValues[itemId] = val,
-                              decoration: InputDecoration(
-                                hintText: "Min: Ksh ${item["bid"]}",
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                                border: const OutlineInputBorder(),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
+              return GridView.builder(
+                padding: const EdgeInsets.all(10),
+                itemCount: controller.displayedItems.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.65,
+                ),
+                itemBuilder: (context, i) {
+                  final item = controller.displayedItems[i];
+                  final itemId = item["id"];
+
+                  return Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: sageGreen.withOpacity(0.45),
+                      border: Border.all(color: vintageBrown, width: 1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _showItemDialog(item),
+                            child: Container(
                               width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: vintageBrown,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  elevation: 2,
-                                ),
-                                onPressed: () =>
-                                    _submitBid(item, _bidValues[itemId] ?? ''),
-                                child: const Text(
-                                  "Bid",
-                                  style: TextStyle(
-                                    color: Color(0xFFB3684D),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              alignment: Alignment.topCenter,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.grey.shade300,
+                                image: (item["img"] as String).isNotEmpty
+                                    ? DecorationImage(
+                                        image: NetworkImage(item["img"]),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: (item["img"] as String).isEmpty
+                                  ? const Center(
+                                      child: Icon(Icons.image_not_supported,
+                                          color: Colors.grey))
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item["name"],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const Divider(color: Colors.black26),
+                        Text(
+                          "Price: Ksh ${item["price"]}",
+                          style: TextStyle(
+                            color: const Color(0xFF703323).withOpacity(0.8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const Divider(color: Colors.black26),
+                        Text(
+                          "Highest bid: Ksh ${item["bid"]}",
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _CountdownText(endTime: item["endTime"]),
+                        const SizedBox(height: 6),
+                        TextField(
+                          keyboardType: TextInputType.number,
+                          onChanged: (val) =>
+                              controller.bidValues[itemId] = val,
+                          decoration: InputDecoration(
+                            hintText: "Min: Ksh ${item["bid"]}",
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: vintageBrown,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 2,
+                            ),
+                            onPressed: () async {
+                              final msg = await controller.submitBid(
+                                  item, controller.bidValues[itemId] ?? '');
+                              _showSnack(msg);
+                            },
+                            child: const Text(
+                              "Bid",
+                              style: TextStyle(
+                                color: Color(0xFFB3684D),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      );
-                    },
-                  ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
+    );
+  }
+
+  void _showItemDialog(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              color: const Color(0xFF1A1A1A),
+              constraints: BoxConstraints(maxHeight: screenHeight * 0.90),
+              child: Column(
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Image.network(
+                            item["img"],
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                          ),
+                          Container(
+                            color: const Color(0xFF2A2A2A),
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item["name"],
+                                    style: const TextStyle(
+                                        color: Color(0xFFF7E7CB),
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 10),
+                                Text(item["description"] ?? "",
+                                    style:
+                                        const TextStyle(color: Colors.white70)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
