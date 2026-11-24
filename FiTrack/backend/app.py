@@ -2,8 +2,6 @@
 
 Run:   python app.py
 """
-import os
-
 from flask import Flask, jsonify
 
 import db
@@ -17,16 +15,12 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    # 1. Make sure the folder for the database file exists
-    os.makedirs(os.path.dirname(app.config["DATABASE"]), exist_ok=True)
-
-    # 2. Connect the database layer to the app, and create it on first run
+    # Connect to PostgreSQL and initialize a new or incomplete catalogue.
     db.init_app(app)
-    if not os.path.exists(app.config["DATABASE"]):
-        with app.app_context():
-            db.init_db()
+    with app.app_context():
+        db.ensure_initialized()
 
-    # 3. Register every group of routes (one file per feature)
+    # Register every group of routes (one file per feature)
     from routes.auth_routes import bp as auth_bp
     from routes.profile import bp as profile_bp
     from routes.workouts import bp as workouts_bp
@@ -40,7 +34,7 @@ def create_app(test_config=None):
                schedule_bp, goals_bp, contact_bp, dashboard_bp):
         app.register_blueprint(bp)
 
-    # 4. CORS so your HTML/JS front end (another origin) can call the API
+    # CORS so your HTML/JS front end (another origin) can call the API
     @app.after_request
     def add_cors(resp):
         resp.headers["Access-Control-Allow-Origin"] = app.config["CORS_ORIGIN"]
@@ -52,7 +46,7 @@ def create_app(test_config=None):
     def health():
         return jsonify({"status": "ok"})
 
-    # 5. JSON errors instead of HTML error pages
+    # JSON errors instead of HTML error pages
     @app.errorhandler(404)
     def not_found(_e):
         return error("Resource not found.", 404)

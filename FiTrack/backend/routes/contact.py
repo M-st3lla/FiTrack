@@ -32,7 +32,7 @@ def submit_contact():
 
     db = get_db()
     db.execute(
-        "INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)",
+        "INSERT INTO contact_messages (name, email, subject, message) VALUES (%s, %s, %s, %s)",
         (name, email, subject or None, message),
     )
     db.commit()

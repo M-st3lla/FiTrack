@@ -1,6 +1,6 @@
 """Small helpers shared by all routes: JSON errors and input validation."""
 import re
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from flask import jsonify, request
 
@@ -21,10 +21,25 @@ def json_body():
 
 
 def rows(cursor_rows):
-    return [dict(r) for r in cursor_rows]
+    return [row_dict(r) for r in cursor_rows]
+
+
+def row_dict(row):
+    """Convert a PostgreSQL row to JSON-friendly values."""
+    result = dict(row)
+    for key, value in result.items():
+        if isinstance(value, datetime):
+            result[key] = value.isoformat()
+        elif isinstance(value, date):
+            result[key] = value.isoformat()
+        elif isinstance(value, time):
+            result[key] = value.isoformat(timespec="minutes")
+    return result
 
 
 def parse_date(value):
+    if isinstance(value, date):
+        return value
     try:
         return date.fromisoformat(value)
     except (ValueError, TypeError):
@@ -33,6 +48,8 @@ def parse_date(value):
 
 def parse_time_minutes(value):
     """'18:30' -> 1110 (minutes since midnight), or None if invalid."""
+    if isinstance(value, time):
+        return value.hour * 60 + value.minute
     try:
         t = datetime.strptime(value, "%H:%M")
         return t.hour * 60 + t.minute

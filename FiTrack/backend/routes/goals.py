@@ -7,7 +7,7 @@ from flask import Blueprint, g, jsonify
 from auth import login_required
 from db import get_db
 from routes.schedule import find_conflict, insert_session
-from utils import check_number, error, json_body, parse_date, parse_time_minutes, rows
+from utils import check_number, error, json_body, parse_date, parse_time_minutes, row_dict, rows
 
 bp = Blueprint("goals", __name__, url_prefix="/api/goals")
 
@@ -20,11 +20,12 @@ SESSIONS_BY_LEVEL = {"beginner": 3, "intermediate": 4, "advanced": 5}
 
 
 def _own_goal(db, goal_id):
-    return db.execute(
+    row = db.execute(
         "SELECT g.*, c.name AS workout FROM goals g "
         "JOIN workout_categories c ON c.id = g.category_id "
-        "WHERE g.id = ? AND g.user_id = ?", (goal_id, g.user["id"])
+        "WHERE g.id = %s AND g.user_id = %s", (goal_id, g.user["id"])
     ).fetchone()
+    return row_dict(row) if row else None
 
 
 @bp.post("")
@@ -41,7 +42,7 @@ def create_goal():
         errors["title"] = "Title must be at least 3 characters."
     category_id = data.get("category_id")
     if not isinstance(category_id, int) or db.execute(
-            "SELECT 1 FROM workout_categories WHERE id = ?", (category_id,)).fetchone() is None:
+            "SELECT 1 FROM workout_categories WHERE id = %s", (category_id,)).fetchone() is None:
         errors["category_id"] = "Choose a valid workout category id."
     target_cal = check_number(data, "target_calories", 1, 1_000_000, errors, integer=True)
     target_weight = check_number(data, "target_weight_kg", 20, 400, errors)
@@ -62,12 +63,13 @@ def create_goal():
 
     cur = db.execute(
         "INSERT INTO goals (user_id, category_id, title, target_calories, target_weight_kg, "
-        "start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "start_date, end_date) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
         (g.user["id"], category_id, title, target_cal, target_weight,
-         start.isoformat(), end.isoformat()),
+         start, end),
     )
+    goal_id = cur.fetchone()["id"]
     db.commit()
-    return jsonify({"goal": dict(_own_goal(db, cur.lastrowid))}), 201
+    return jsonify({"goal": row_dict(_own_goal(db, goal_id))}), 201
 
 
 @bp.get("")
@@ -76,7 +78,7 @@ def list_goals():
     data = get_db().execute(
         "SELECT g.*, c.name AS workout FROM goals g "
         "JOIN workout_categories c ON c.id = g.category_id "
-        "WHERE g.user_id = ? ORDER BY g.end_date", (g.user["id"],)
+        "WHERE g.user_id = %s ORDER BY g.end_date", (g.user["id"],)
     ).fetchall()
     return jsonify({"goals": rows(data)})
 
@@ -87,7 +89,7 @@ def get_goal(goal_id):
     goal = _own_goal(get_db(), goal_id)
     if goal is None:
         return error("Goal not found.", 404)
-    return jsonify({"goal": dict(goal)})
+    return jsonify({"goal": row_dict(goal)})
 
 
 @bp.put("/<int:goal_id>")
@@ -99,16 +101,17 @@ def update_goal_status(goal_id):
     data = json_body()
     if data is None or data.get("status") not in STATUSES:
         return error(f"status must be one of: {', '.join(STATUSES)}.", 422)
-    db.execute("UPDATE goals SET status = ? WHERE id = ?", (data["status"], goal_id))
+    db.execute("UPDATE goals SET status = %s WHERE id = %s", (data["status"], goal_id))
     db.commit()
-    return jsonify({"goal": dict(_own_goal(db, goal_id))})
+    return jsonify({"goal": row_dict(_own_goal(db, goal_id))})
 
 
 @bp.delete("/<int:goal_id>")
 @login_required
 def delete_goal(goal_id):
     db = get_db()
-    cur = db.execute("DELETE FROM goals WHERE id = ? AND user_id = ?", (goal_id, g.user["id"]))
+    cur = db.execute("DELETE FROM goals WHERE id = %s AND user_id = %s",
+                     (goal_id, g.user["id"]))
     db.commit()
     if cur.rowcount == 0:
         return error("Goal not found.", 404)
@@ -133,7 +136,7 @@ def _sessions_per_week(db, requested):
     if requested in PATTERNS:
         return requested
     profile = db.execute(
-        "SELECT fitness_level FROM profiles WHERE user_id = ?", (g.user["id"],)
+        "SELECT fitness_level FROM profiles WHERE user_id = %s", (g.user["id"],)
     ).fetchone()
     level = profile["fitness_level"] if profile else None
     return SESSIONS_BY_LEVEL.get(level, 3)
@@ -158,10 +161,10 @@ def goal_plan(goal_id):
     weeks = max(1, math.ceil(total_days / 7))
 
     exercises = rows(db.execute(
-        "SELECT name, sets, reps, duration_min FROM exercises WHERE category_id = ? ORDER BY id",
+        "SELECT name, sets, reps, duration_min FROM exercises WHERE category_id = %s ORDER BY id",
         (goal["category_id"],)).fetchall())
     tips = rows(db.execute(
-        "SELECT title, foods, description FROM nutrition_tips WHERE category_id = ? ORDER BY id",
+        "SELECT title, foods, description FROM nutrition_tips WHERE category_id = %s ORDER BY id",
         (goal["category_id"],)).fetchall())
     for t in tips:
         t["foods"] = [f.strip() for f in t["foods"].split(",")]
@@ -184,7 +187,8 @@ def goal_plan(goal_id):
         summary["calories_per_session"] = round(goal["target_calories"] / len(days))
 
     notes = []
-    profile = db.execute("SELECT * FROM profiles WHERE user_id = ?", (g.user["id"],)).fetchone()
+    profile = db.execute("SELECT * FROM profiles WHERE user_id = %s",
+                         (g.user["id"],)).fetchone()
     if goal["target_weight_kg"] and profile and profile["weight_kg"]:
         change = goal["target_weight_kg"] - profile["weight_kg"]
         per_week = change / weeks

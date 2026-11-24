@@ -1,17 +1,38 @@
 import os
 import sys
+import uuid
 from datetime import date, timedelta
 
 import pytest
+import psycopg
+from psycopg import sql
+from psycopg.conninfo import make_conninfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app import create_app  # noqa: E402
 
 
 @pytest.fixture()
-def client(tmp_path):
-    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "test.db")})
-    return app.test_client()
+def client():
+    database_url = os.environ.get("TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("Set TEST_DATABASE_URL to run tests against PostgreSQL.")
+
+    schema_name = f"fitrack_test_{uuid.uuid4().hex}"
+    with psycopg.connect(database_url, autocommit=True) as admin:
+        admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema_name)))
+
+    test_database_url = make_conninfo(
+        database_url, options=f"-c search_path={schema_name}"
+    )
+    try:
+        app = create_app({"TESTING": True, "DATABASE_URL": test_database_url})
+        yield app.test_client()
+    finally:
+        with psycopg.connect(database_url, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema_name))
+            )
 
 
 @pytest.fixture()
@@ -35,6 +56,32 @@ def test_health_and_seeded_catalogue(client):
     tips = client.get("/api/nutrition?category_id=1").get_json()["nutrition"]
     assert tips and isinstance(tips[0]["foods"], list)
     assert client.get("/api/workouts/999").status_code == 404
+
+
+def test_seed_is_idempotent_and_repairs_missing_rows(client):
+    from db import get_db
+    from seed_data import seed
+
+    with client.application.app_context():
+        database = get_db()
+        seed(database)
+        assert database.execute(
+            "SELECT COUNT(*) AS count FROM workout_categories"
+        ).fetchone()["count"] == 5
+        assert database.execute(
+            "SELECT COUNT(*) AS count FROM exercises"
+        ).fetchone()["count"] == 25
+        assert database.execute(
+            "SELECT COUNT(*) AS count FROM nutrition_tips"
+        ).fetchone()["count"] == 15
+
+        database.execute(
+            "DELETE FROM exercises WHERE category_id = %s AND name = %s", (1, "Deadlift")
+        )
+        seed(database)
+        assert database.execute(
+            "SELECT COUNT(*) AS count FROM exercises WHERE category_id = %s", (1,)
+        ).fetchone()["count"] == 5
 
 
 def test_register_login_and_auth_rules(client, auth):
@@ -77,6 +124,8 @@ def test_sessions_crud_and_conflicts(client, auth):
     body = {"category_id": 1, "session_date": future(2), "start_time": "18:00", "duration_min": 60}
     r = client.post("/api/sessions", headers=auth, json=body)
     assert r.status_code == 201
+    assert r.get_json()["session"]["session_date"] == future(2)
+    assert r.get_json()["session"]["start_time"] == "18:00"
     sid = r.get_json()["session"]["id"]
 
     clash = client.post("/api/sessions", headers=auth, json={**body, "start_time": "18:30"})

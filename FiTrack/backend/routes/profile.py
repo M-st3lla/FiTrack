@@ -3,7 +3,7 @@ from flask import Blueprint, g, jsonify
 
 from auth import login_required
 from db import get_db
-from utils import check_number, error, json_body
+from utils import check_number, error, json_body, row_dict
 
 bp = Blueprint("profile", __name__, url_prefix="/api/profile")
 
@@ -21,9 +21,9 @@ def _bmi(profile):
 @login_required
 def get_profile():
     row = get_db().execute(
-        "SELECT * FROM profiles WHERE user_id = ?", (g.user["id"],)
+        "SELECT * FROM profiles WHERE user_id = %s", (g.user["id"],)
     ).fetchone()
-    profile = dict(row) if row else {}
+    profile = row_dict(row) if row else {}
     profile["bmi"] = _bmi(row)
     return jsonify({"user": dict(g.user), "profile": profile})
 
@@ -51,7 +51,7 @@ def update_profile():
     db.execute(
         """
         INSERT INTO profiles (user_id, age, weight_kg, height_cm, calories_to_burn, fitness_level)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
         ON CONFLICT(user_id) DO UPDATE SET
             age = excluded.age,
             weight_kg = excluded.weight_kg,

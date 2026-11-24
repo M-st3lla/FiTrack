@@ -1,4 +1,4 @@
-# FiTrack Backend (Flask + SQLite)
+# FiTrack Backend (Flask + PostgreSQL)
 
 REST API for the Gym Workout and Nutrition Management System.
 
@@ -9,19 +9,38 @@ cd fitrack-backend
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python app.py                     # http://127.0.0.1:5000
 ```
 
-The database file `instance/fitrack.db` is created automatically on first run.
-To wipe it and start fresh: `flask --app app init-db`.
-Run the tests: `pytest`.
+Create a PostgreSQL database named `fitrack`, then set the connection string
+before starting the API:
+
+```powershell
+$env:DATABASE_URL = "postgresql://USER:PASSWORD@localhost:5432/fitrack"
+python app.py
+```
+
+The schema and starter catalogue are initialized automatically on first run;
+missing starter rows are repaired at startup. `flask --app app init-db` drops
+and recreates all application tables in the configured database schema, so it
+deletes existing data. Run tests against a PostgreSQL database with:
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql://USER:PASSWORD@localhost:5432/fitrack_test"
+pytest
+```
+
+Tests create and remove a uniquely named temporary schema in that database.
+
+The Vite frontend proxies `/api` requests to `http://127.0.0.1:5000` during
+development. Start the frontend separately with `cd ../frontend && npm run dev`.
+For a separately hosted API, set `VITE_API_BASE_URL` to its `/api` URL.
 
 ## Project structure
 
 | File | Purpose |
 |---|---|
 | `app.py` | Creates the app, connects the DB, registers routes, CORS, JSON errors |
-| `config.py` | Settings (secret key, database path, CORS origin) |
+| `config.py` | Settings (secret key, PostgreSQL connection string, CORS origin) |
 | `db.py` | **Database connection** (`get_db()`), `init_db()` |
 | `schema.sql` | **Table definitions** |
 | `seed_data.py` | Starter workouts, exercises, nutrition tips |

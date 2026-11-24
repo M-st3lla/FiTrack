@@ -36,7 +36,7 @@ def login_required(view):
             return error("Invalid token.", 401)
 
         user = get_db().execute(
-            "SELECT id, name, email FROM users WHERE id = ?", (data["uid"],)
+            "SELECT id, name, email FROM users WHERE id = %s", (data["uid"],)
         ).fetchone()
         if user is None:
             return error("User no longer exists.", 401)

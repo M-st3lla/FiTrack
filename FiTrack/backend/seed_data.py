@@ -90,7 +90,7 @@ CATALOGUE = {
              "Fill half your plate with vegetables, a quarter with protein and a quarter with carbs."),
             ("Eat regularly", "Fruit, nuts, yoghurt, whole-grain snacks",
              "Regular meals keep energy steady through the day."),
-            ("Sleep and recovery", "Water, magnesium-rich foods (nuts, greens)",
+            ("Sleep and recovery", "Water, magnesium-rich foods such as nuts and greens",
              "7-9 hours of sleep is as important as the food you eat."),
         ],
     ),
@@ -98,21 +98,42 @@ CATALOGUE = {
 
 
 def seed(db):
-    """Insert the starter catalogue. `db` is an open sqlite3 connection."""
+    """Insert or repair the starter catalogue without creating duplicates."""
     for name, (description, exercises, tips) in CATALOGUE.items():
-        cur = db.execute(
-            "INSERT INTO workout_categories (name, description) VALUES (?, ?)",
-            (name, description),
-        )
-        category_id = cur.lastrowid
-        db.executemany(
-            "INSERT INTO exercises (category_id, name, description, sets, reps, duration_min) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            [(category_id, *e) for e in exercises],
-        )
-        db.executemany(
-            "INSERT INTO nutrition_tips (category_id, title, foods, description) "
-            "VALUES (?, ?, ?, ?)",
-            [(category_id, *t) for t in tips],
-        )
+        category = db.execute(
+            "SELECT id FROM workout_categories WHERE name = %s", (name,)
+        ).fetchone()
+        if category is None:
+            cur = db.execute(
+                "INSERT INTO workout_categories (name, description) VALUES (%s, %s) RETURNING id",
+                (name, description),
+            )
+            category_id = cur.fetchone()["id"]
+        else:
+            category_id = category["id"]
+
+        existing_exercises = {
+            row["name"] for row in db.execute(
+                "SELECT name FROM exercises WHERE category_id = %s", (category_id,)
+            ).fetchall()
+        }
+        with db.cursor() as cursor:
+            cursor.executemany(
+                "INSERT INTO exercises (category_id, name, description, sets, reps, duration_min) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                [(category_id, *exercise) for exercise in exercises
+                 if exercise[0] not in existing_exercises],
+            )
+
+        existing_tips = {
+            row["title"] for row in db.execute(
+                "SELECT title FROM nutrition_tips WHERE category_id = %s", (category_id,)
+            ).fetchall()
+        }
+        with db.cursor() as cursor:
+            cursor.executemany(
+                "INSERT INTO nutrition_tips (category_id, title, foods, description) "
+                "VALUES (%s, %s, %s, %s)",
+                [(category_id, *tip) for tip in tips if tip[0] not in existing_tips],
+            )
     db.commit()

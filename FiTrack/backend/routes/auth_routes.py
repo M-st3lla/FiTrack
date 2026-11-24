@@ -1,5 +1,5 @@
 """Register and log in."""
-import sqlite3
+from psycopg.errors import UniqueViolation
 
 from flask import Blueprint, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -34,14 +34,15 @@ def register():
     db = get_db()
     try:
         cur = db.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id",
             (name, email, generate_password_hash(password)),
         )
         db.commit()
-    except sqlite3.IntegrityError:
+    except UniqueViolation:
+        db.rollback()
         return error("An account with that email already exists.", 409)
 
-    user = {"id": cur.lastrowid, "name": name, "email": email}
+    user = {"id": cur.fetchone()["id"], "name": name, "email": email}
     return jsonify({"user": user, "token": make_token(user["id"])}), 201
 
 
@@ -54,7 +55,7 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
 
-    row = get_db().execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    row = get_db().execute("SELECT * FROM users WHERE email = %s", (email,)).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):
         return error("Incorrect email or password.", 401)
 

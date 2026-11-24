@@ -17,7 +17,7 @@ def list_nutrition():
     )
     params = ()
     if category_id is not None:
-        sql += " WHERE n.category_id = ?"
+        sql += " WHERE n.category_id = %s"
         params = (category_id,)
     data = get_db().execute(sql + " ORDER BY n.id", params).fetchall()
     tips = rows(data)
