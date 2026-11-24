@@ -1,7 +1,17 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+} from "react-router-dom";
+
 import { AppProvider } from "./context/AppContext";
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Workouts from "./pages/Workouts";
@@ -9,6 +19,8 @@ import Nutrition from "./pages/Nutrition";
 import Schedule from "./pages/Schedule";
 import Dashboard from "./pages/Dashboard";
 import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 function NotFound() {
   return (
@@ -21,26 +33,54 @@ function NotFound() {
   );
 }
 
+function AppLayout() {
+  const location = useLocation();
+
+  const isAuthPage = ["/login", "/signup", "/register"].includes(
+    location.pathname
+  );
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-800">
+      {!isAuthPage && <Navbar />}
+
+      <div
+        className={
+          isAuthPage
+            ? "flex-1"
+            : "mx-auto w-full max-w-6xl flex-1 px-4 py-8"
+        }
+      >
+        <Routes>
+          <Route path="/" element={<Home />} />
+
+          {/* Authentication */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/register" element={<Signup />} />
+
+          {/* Main application */}
+          <Route path="/about" element={<About />} />
+          <Route path="/workouts" element={<Workouts />} />
+          <Route path="/nutrition" element={<Nutrition />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/contact" element={<Contact />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
+
+      {!isAuthPage && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <div className="flex min-h-screen flex-col bg-slate-50 text-slate-800">
-          <Navbar />
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/workouts" element={<Workouts />} />
-              <Route path="/nutrition" element={<Nutrition />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <AppLayout />
       </BrowserRouter>
     </AppProvider>
   );

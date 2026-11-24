@@ -1,4 +1,5 @@
 
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import {
     Activity,
@@ -69,7 +70,7 @@ export default function Signup({ onSignup }) {
             } else {
                 console.info("FiTrack sign-up form:", payload);
                 setError(
-                    "The form is ready. Connect it to your registration API."
+                    "Your signup form is working, but account creation is not connected to the backend yet."
                 );
             }
         } catch (err) {
@@ -86,7 +87,6 @@ export default function Signup({ onSignup }) {
 
     return (
         <main className="min-h-screen bg-[#f4f7f1] px-4 py-6 text-[#19382f] sm:px-6 lg:px-10">
-
             <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-[0_24px_80px_-35px_rgba(18,60,50,0.28)] lg:grid-cols-[0.95fr_1.05fr]">
 
                 {/* LEFT BRAND SECTION */}
@@ -96,8 +96,7 @@ export default function Signup({ onSignup }) {
 
                     <div className="absolute -bottom-28 -left-24 h-80 w-80 rounded-full bg-[#b8e986]/10 blur-2xl" />
 
-                    <a href="/" className="relative z-10 inline-flex w-fit items-center gap-3">
-
+                    <Link to="/" className="relative z-10 inline-flex w-fit items-center gap-3">
                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#b8e986] text-[#123c32]">
                             <Activity size={23} strokeWidth={2.7} />
                         </span>
@@ -105,8 +104,7 @@ export default function Signup({ onSignup }) {
                         <span className="text-2xl font-black tracking-tight">
                             FiTrack<span className="text-[#b8e986]">.</span>
                         </span>
-
-                    </a>
+                    </Link>
 
                     <div className="relative z-10 my-12 max-w-md">
 
@@ -126,7 +124,6 @@ export default function Signup({ onSignup }) {
                         </p>
 
                         <div className="mt-10 space-y-4">
-
                             {[
                                 {
                                     icon: Dumbbell,
@@ -144,9 +141,7 @@ export default function Signup({ onSignup }) {
                                     detail: "Keep your sessions visible and on schedule.",
                                 },
                             ].map(({ icon: Icon, title, detail }) => (
-
                                 <div key={title} className="flex items-start gap-4">
-
                                     <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10 text-[#b8e986]">
                                         <Icon size={19} />
                                     </span>
@@ -160,28 +155,22 @@ export default function Signup({ onSignup }) {
                                             {detail}
                                         </p>
                                     </div>
-
                                 </div>
-
                             ))}
-
                         </div>
                     </div>
 
                     <p className="relative z-10 text-xs text-[#a9c4b5]">
                         Small steps. Steady progress. Your pace.
                     </p>
-
                 </section>
 
                 {/* RIGHT SIGNUP SECTION */}
                 <section className="flex items-center justify-center px-5 py-10 sm:px-10 lg:px-12 xl:px-16">
-
                     <div className="w-full max-w-md">
 
                         {/* MOBILE LOGO */}
-                        <a href="/" className="mb-9 inline-flex items-center gap-2 lg:hidden">
-
+                        <Link to="/" className="mb-9 inline-flex items-center gap-2 lg:hidden">
                             <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#123c32] text-[#b8e986]">
                                 <Activity size={19} />
                             </span>
@@ -189,11 +178,9 @@ export default function Signup({ onSignup }) {
                             <span className="text-xl font-black tracking-tight">
                                 FiTrack<span className="text-[#39815e]">.</span>
                             </span>
-
-                        </a>
+                        </Link>
 
                         <div className="mb-8">
-
                             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#39815e]">
                                 Start with a goal
                             </p>
@@ -205,7 +192,6 @@ export default function Signup({ onSignup }) {
                             <p className="mt-2 text-sm leading-6 text-[#78877e]">
                                 Set up your space. You can fine-tune your fitness plan later.
                             </p>
-
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -344,7 +330,6 @@ export default function Signup({ onSignup }) {
 
                             {/* TERMS */}
                             <label className="flex cursor-pointer items-start gap-3 pt-1 text-xs leading-5 text-[#718077]">
-
                                 <input
                                     type="checkbox"
                                     name="terms"
@@ -363,7 +348,6 @@ export default function Signup({ onSignup }) {
                                         Privacy Policy
                                     </a>.
                                 </span>
-
                             </label>
 
                             {/* ERROR MESSAGE */}
@@ -385,25 +369,22 @@ export default function Signup({ onSignup }) {
                                     <ArrowRight size={17} className="transition group-hover:translate-x-1" />
                                 )}
                             </button>
-
                         </form>
 
                         {/* LOGIN LINK */}
                         <p className="mt-7 text-center text-sm text-[#829087]">
                             Already have an account?{" "}
-                            <a href="/login" className="font-bold text-[#247a58] hover:underline">
+                            <Link to="/login" className="font-bold text-[#247a58] hover:underline">
                                 Log in
-                            </a>
+                            </Link>
                         </p>
 
                         <div className="mt-8 flex items-center justify-center gap-2 text-[11px] font-medium text-[#9aa79f]">
                             <span className="text-[#39815e]">✓</span>
                             Your fitness journey, organised in one place
                         </div>
-
                     </div>
                 </section>
-
             </div>
         </main>
     );
