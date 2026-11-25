@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+﻿import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useApp } from "../context/AppContext";
 
 const links = [
   ["/", "Home"],
@@ -13,10 +14,19 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useApp();
+  const navigate = useNavigate();
+
   const item = ({ isActive }) =>
     `block rounded-md px-3 py-2 text-sm font-medium ${
       isActive ? "bg-emerald-100 text-emerald-700" : "text-slate-600 hover:bg-slate-100"
     }`;
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
@@ -34,12 +44,36 @@ export default function Navbar() {
           {open ? "Close" : "Menu"}
         </button>
 
-        <nav className="hidden gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {links.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === "/"} className={item}>
               {label}
             </NavLink>
           ))}
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="ml-2 rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            >
+              Log out
+            </button>
+          ) : (
+            <div className="ml-2 flex items-center gap-2">
+              <Link
+                to="/login"
+                className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Sign up
+              </Link>
+            </div>
+          )}
         </nav>
       </div>
 
@@ -50,6 +84,34 @@ export default function Navbar() {
               {label}
             </NavLink>
           ))}
+          <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2">
+            {user ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-md bg-slate-100 px-3 py-2 text-left text-sm font-medium text-slate-700"
+              >
+                Log out
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
         </nav>
       )}
     </header>

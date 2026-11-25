@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { useApp } from "../context/AppContext";
@@ -15,6 +15,7 @@ export default function Schedule() {
     });
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const onChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,16 +23,24 @@ export default function Schedule() {
         setSaved(false);
     };
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         if (!form.workoutId || !form.day || !form.time) {
             setError("Please choose a workout, a day and a time.");
             return;
         }
-        const err = addSession(form);
-        if (err) return setError(err);
-        setSaved(true);
-        setForm({ ...form, day: "", time: "" });
+        setSubmitting(true);
+        try {
+            const err = await addSession(form);
+            if (err) {
+                setError(err);
+                return;
+            }
+            setSaved(true);
+            setForm({ ...form, day: "", time: "" });
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const inputCls = "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2";
@@ -68,10 +77,13 @@ export default function Schedule() {
                     </label>
 
                     {error && <p className="text-sm text-red-600">{error}</p>}
-                    {saved && <p className="text-sm text-emerald-700">Session scheduled ✓</p>}
+                    {saved && <p className="text-sm text-emerald-700">Session scheduled</p>}
 
-                    <button className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
-                        Add to schedule
+                    <button
+                        disabled={submitting}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                        {submitting ? "Adding..." : "Add to schedule"}
                     </button>
                 </form>
 
