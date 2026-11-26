@@ -28,14 +28,21 @@ export default function Contact() {
     };
 
     const cls = (k) =>
-        `mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400 ${errors[k] ? "border-red-400" : "border-slate-300"
+        `fitness-field ${errors[k] ? "border-red-400" : ""
         }`;
 
     return (
         <div>
-            <PageHeader title="Contact" subtitle="Questions or feedback? Send us a message." />
+            <PageHeader title="Let's talk" subtitle="Questions, feedback or an idea for FiTrack? We’re listening." />
 
-            <form onSubmit={onSubmit} noValidate className="max-w-xl space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+            <div className="contact-layout">
+                <aside className="contact-callout">
+                    <span className="eyebrow">We’re here</span>
+                    <strong>GOOD<br />ENERGY<br />ONLY.</strong>
+                    <p>Send a note and help us make FiTrack better for your training routine.</p>
+                    <span className="contact-star" aria-hidden="true">✳</span>
+                </aside>
+                <form onSubmit={onSubmit} noValidate className="contact-form space-y-5">
                 <label className="block">
                     <span className="text-sm font-medium">Name</span>
                     <input name="name" value={form.name} onChange={onChange} className={cls("name")} />
@@ -52,12 +59,13 @@ export default function Contact() {
                     {errors.message && <span className="text-xs text-red-600">{errors.message}</span>}
                 </label>
 
-                {sent && <p className="text-sm text-emerald-700">Thanks! Your message has been sent ✓</p>}
+                {sent && <p className="text-sm font-bold text-[#4023CE]">Thanks! Your message has been sent ✓</p>}
 
-                <button className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
+                <button className="rounded-full bg-[#f86d29] px-7 py-3.5 text-sm font-black text-[#271C5E] hover:bg-[#ff8c53]">
                     Send message
                 </button>
-            </form>
+                </form>
+            </div>
         </div>
     );
 }

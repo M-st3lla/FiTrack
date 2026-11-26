@@ -15,17 +15,15 @@ const RULES = {
 function Field({ name, label, value, onChange, error, hint }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="text-xs font-bold text-[#271C5E]/65">{label}</span>
       <input
         type="number"
         name={name}
         value={value}
         onChange={onChange}
-        className={`mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400 ${
-          error ? "border-red-400" : "border-slate-300"
-        }`}
+        className={`fitness-field ${error ? "border-red-400" : ""}`}
       />
-      {hint && !error && <span className="text-xs text-slate-500">{hint}</span>}
+      {hint && !error && <span className="text-[10px] text-[#271C5E]/40">{hint}</span>}
       {error && <span className="text-xs text-red-600">{error}</span>}
     </label>
   );
@@ -70,9 +68,14 @@ export default function GoalForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold text-slate-900">Set your goal</h2>
-      <p className="mb-4 text-sm text-slate-600">Tell us about you and we'll build a weekly path.</p>
+  <form onSubmit={onSubmit} noValidate className="fitness-form rounded-[1.5rem] bg-white p-6 text-[#271C5E] shadow-[0_24px_70px_-35px_rgba(39,28,94,.7)]">
+    <div className="flex items-end justify-between">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f86d29]">Personal plan</p>
+        <h2 className="mt-1 text-2xl font-black">Set your goal</h2>
+      </div>
+      <span className="text-3xl text-[#f86d29]">＋</span>
+    </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="age" label="Age" value={form.age} onChange={onChange} error={errors.age} />
@@ -89,13 +92,13 @@ export default function GoalForm() {
         <Field name="weeks" label="Period (weeks)" value={form.weeks} onChange={onChange} error={errors.weeks} />
 
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Goal</span>
+          <span className="text-xs font-bold text-[#271C5E]/65">Goal</span>
           <select
             name="goal"
             value={form.goal}
             onChange={onChange}
-            className={`mt-1 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-400 ${
-              errors.goal ? "border-red-400" : "border-slate-300"
+            className={`fitness-field ${
+              errors.goal ? "border-red-400" : ""
             }`}
           >
             <option value="">Select a goal</option>
@@ -111,7 +114,7 @@ export default function GoalForm() {
 
       <button
         type="submit"
-        className="mt-6 w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
+        className="mt-6 w-full rounded-full bg-[#f86d29] px-4 py-3 text-sm font-black text-[#271C5E] transition hover:bg-[#ff8c53]"
       >
         {profile ? "Update my plan" : "Build my plan"}
       </button>

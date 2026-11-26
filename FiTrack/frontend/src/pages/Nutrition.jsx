@@ -1,71 +1,29 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { useApp } from "../context/AppContext";
-import { fetchNutrition } from "../api/catalog";
+import { WORKOUTS } from "../data/workouts";
+import { NUTRITION } from "../data/nutrition";
 
 export default function Nutrition() {
-    const { profile, workouts, catalogLoading, catalogError } = useApp();
+    const { profile } = useApp();
     const [params] = useSearchParams();
     const initial = params.get("goal") || profile?.goal || "weight-loss";
-    const [workoutId, setWorkoutId] = useState(initial);
-    const [nutritionState, setNutritionState] = useState(null);
-    const workout = workouts.find((item) => item.id === workoutId) ?? workouts[0];
-
-    useEffect(() => {
-        if (!workout) return undefined;
-        let active = true;
-        fetchNutrition(workout.backendId)
-            .then((data) => {
-                if (active) {
-                    setNutritionState({
-                        categoryId: workout.backendId,
-                        recommendations: data,
-                        error: "",
-                    });
-                }
-            })
-            .catch((err) => {
-                if (active) {
-                    setNutritionState({
-                        categoryId: workout.backendId,
-                        recommendations: [],
-                        error: err.message,
-                    });
-                }
-            });
-        return () => {
-            active = false;
-        };
-    }, [workout]);
-
-    const currentNutrition = nutritionState?.categoryId === workout?.backendId
-        ? nutritionState
-        : null;
-    const recommendations = currentNutrition?.recommendations ?? [];
-    const loading = Boolean(workout) && !currentNutrition;
-    const error = currentNutrition?.error ?? "";
-
-    const foods = recommendations.flatMap((tip) =>
-        tip.foods.map((name, index) => ({
-            key: `${tip.id}-${index}`,
-            name,
-            recommendation: tip.title,
-        })),
-    );
+    const [goal, setGoal] = useState(NUTRITION[initial] ? initial : "weight-loss");
+    const data = NUTRITION[goal];
 
     return (
         <div>
-            <PageHeader title="Nutrition" subtitle="General food guidance matched to your workout goal." />
+            <PageHeader title="Fuel the effort" subtitle="Simple, practical food guidance for the training you have planned." />
 
-            <label className="mb-6 block max-w-xs">
-                <span className="text-sm font-medium text-slate-700">Show nutrition for</span>
+            <label className="mb-8 block max-w-xs">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#f86d29]">Nutrition plan</span>
                 <select
-                    value={workout?.id ?? ""}
-                    onChange={(e) => setWorkoutId(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    className="fitness-field"
                 >
-                    {workouts.map((w) => (
+                    {WORKOUTS.map((w) => (
                         <option key={w.id} value={w.id}>
                             {w.name}
                         </option>
@@ -73,48 +31,37 @@ export default function Nutrition() {
                 </select>
             </label>
 
-            {catalogLoading && <p role="status" className="mb-4 text-sm text-slate-500">Loading workout categories…</p>}
-            {catalogError && <p role="alert" className="mb-4 text-sm text-red-600">Could not load workout categories: {catalogError}</p>}
-            {loading && <p role="status" className="mb-4 text-sm text-slate-500">Loading nutrition recommendations…</p>}
-            {error && <p role="alert" className="mb-4 text-sm text-red-600">Could not load nutrition recommendations: {error}</p>}
-            {!catalogLoading && !catalogError && !workout && (
-                <p className="text-sm text-slate-500">No workout categories are available.</p>
-            )}
-            {workout && recommendations.length === 0 && !loading && !error && !catalogError && (
-                <p className="mb-4 text-sm text-slate-500">No nutrition recommendations are available for this workout.</p>
-            )}
+            <div className="nutrition-summary">
+                <span className="eyebrow">The focus</span>
+                <p>{data.summary}</p>
+            </div>
 
-            {recommendations.length > 0 && (
-                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
-                    Nutrition guidance for {workout.name}, loaded from FiTrack.
-                </div>
-            )}
-
-            {recommendations.length > 0 && <div className="grid gap-6 md:grid-cols-3">
-                <section className="rounded-xl border border-slate-200 bg-white p-6 md:col-span-2">
-                    <h2 className="text-lg font-semibold">Recommended foods</h2>
-                    <ul className="mt-3 divide-y divide-slate-100">
-                        {foods.map((food) => (
-                            <li key={food.key} className="py-3">
-                                <p className="font-medium">{food.name}</p>
-                                <p className="text-sm text-slate-500">{food.recommendation}</p>
+            <div className="grid gap-10 md:grid-cols-[1.4fr_.6fr]">
+                <section className="nutrition-foods">
+                    <h2 className="text-2xl font-black">Build your plate</h2>
+                    <ul className="mt-4 border-t border-[#271C5E]/10">
+                        {data.foods.map((f) => (
+                            <li key={f.name} className="grid gap-1 border-b border-[#271C5E]/10 py-4 sm:grid-cols-[1fr_1fr]">
+                                <p className="font-black"><span className="mr-3 text-[#f86d29]">↗</span>{f.name}</p>
+                                <p className="text-sm text-[#271C5E]/55">{f.why}</p>
                             </li>
                         ))}
                     </ul>
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-lg font-semibold">Quick tips</h2>
-                    <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                        {recommendations.map((tip) => (
-                            <li key={tip.id} className="flex gap-2">
-                                <span className="text-emerald-600">•</span>
-                                <span><strong>{tip.title}:</strong> {tip.description}</span>
+                <section className="nutrition-tips">
+                    <p className="eyebrow text-white/55">Keep in mind</p>
+                    <h2 className="mt-2 text-3xl font-black">Quick tips</h2>
+                    <ul className="mt-4 space-y-3 text-sm text-white/65">
+                        {data.tips.map((t) => (
+                            <li key={t} className="flex gap-2">
+                                <span className="text-[#f86d29]">✳</span>
+                                {t}
                             </li>
                         ))}
                     </ul>
                 </section>
-            </div>}
+            </div>
 
             <p className="mt-6 text-xs text-slate-500">
                 General guidance only, not medical advice. See a nutritionist for a personalised plan.

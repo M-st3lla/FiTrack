@@ -1,50 +1,67 @@
 import { Link } from "react-router-dom";
 import GoalForm from "../components/GoalForm";
 
-const quick = [
-    ["/workouts", "🏋️", "Workouts", "Pick a workout type and see the exercises."],
-    ["/nutrition", "🥗", "Nutrition", "Food guidance matched to your goal."],
-    ["/schedule", "📅", "Schedule", "Choose the day and time for each session."],
-    ["/dashboard", "📊", "Dashboard", "See your plan, timetable and progress."],
+const pathways = [
+    ["/workouts", "01", "Train", "Find your next session"],
+    ["/nutrition", "02", "Fuel", "Eat for the work"],
+    ["/schedule", "03", "Show up", "Make time for you"],
+    ["/dashboard", "04", "Progress", "See every small win"],
 ];
 
 export default function Home() {
     return (
-        <div>
-            <section className="grid items-center gap-8 md:grid-cols-2">
-                <div>
-                    <h1 className="text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl">
-                        Plan your workouts. <span className="text-emerald-600">Fuel them right.</span>
-                    </h1>
-                    <p className="mt-4 text-lg text-slate-600">
-                        FiTrack brings workouts, nutrition and gym scheduling into one simple, mobile-friendly place.
-                        Enter your details, set a goal and get a clear weekly path to reach it.
+        <main className="home-page">
+            <section className="home-hero">
+                <div className="home-hero-photo" aria-hidden="true" />
+                <div className="home-hero-copy">
+                    <p className="eyebrow text-white/75">A better routine starts here</p>
+                    <h1 className="home-title">MOVE<br />WITH<br /><span>PURPOSE.</span></h1>
+                    <p className="mt-6 max-w-sm text-base leading-7 text-white/75">
+                        Workouts, food and plans that fit your life. No noise. Just a clear next step.
                     </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                        <Link to="/workouts" className="rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700">
-                            Browse workouts
-                        </Link>
-                        <Link to="/schedule" className="rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold hover:bg-slate-100">
-                            Schedule a session
-                        </Link>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <Link to="/workouts" className="button-orange">Find your workout <span aria-hidden="true">↗</span></Link>
+                        <Link to="/dashboard" className="button-outline-light">My progress</Link>
                     </div>
                 </div>
-                <GoalForm />
+                <div className="home-hero-mark" aria-hidden="true">
+                    <span>FiTrack</span>
+                    <b>EST.<br />YOUR<br />PACE.</b>
+                    <small>TRAINING / WELLNESS / YOU</small>
+                </div>
+                <div className="home-hero-index"><span>01</span> / EVERY DAY COUNTS</div>
             </section>
 
-            <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {quick.map(([to, icon, title, text]) => (
-                    <Link
-                        key={to}
-                        to={to}
-                        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-400 hover:shadow"
-                    >
-                        <div className="text-3xl">{icon}</div>
-                        <h3 className="mt-2 font-semibold text-slate-900">{title}</h3>
-                        <p className="mt-1 text-sm text-slate-600">{text}</p>
-                    </Link>
-                ))}
+            <div className="home-ticker" aria-label="Train, fuel, repeat">
+                <span>TRAIN</span><i>✳</i><span>FUEL</span><i>✳</i><span>REPEAT</span><i>✳</i><span>SHOW UP</span><i>✳</i><span>TRAIN</span>
+            </div>
+
+            <section className="pathway-section">
+                <div className="pathway-heading">
+                    <p className="eyebrow">The FiTrack method</p>
+                    <h2>GOOD DAYS<br /><span>ADD UP.</span></h2>
+                </div>
+                <div className="pathway-list">
+                    {pathways.map(([to, number, title, text]) => (
+                        <Link key={to} to={to} className="pathway-row">
+                            <span className="pathway-number">{number}</span>
+                            <span className="pathway-name">{title}</span>
+                            <span className="pathway-detail">{text}</span>
+                            <span className="pathway-arrow" aria-hidden="true">↗</span>
+                        </Link>
+                    ))}
+                </div>
             </section>
-        </div>
+
+            <section id="start" className="home-plan">
+                <div className="home-plan-copy">
+                    <p className="eyebrow text-white/65">Start where you are</p>
+                    <h2>MAKE A PLAN.<br /><span>MAKE IT YOURS.</span></h2>
+                    <p>Set a goal that feels right for you. FiTrack will turn it into a weekly path you can actually follow.</p>
+                    <div className="plan-note"><span>✳</span> Small steps. Real momentum.</div>
+                </div>
+                <div className="home-plan-form"><GoalForm /></div>
+            </section>
+        </main>
     );
 }

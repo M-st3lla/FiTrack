@@ -1,16 +1,19 @@
 
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   Link,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
-import { AppProvider } from "./context/AppContext";
+import { AppProvider, useApp } from "./context/AppContext";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ThemeToggle from "./components/ThemeToggle";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -26,14 +29,43 @@ function NotFound() {
   return (
     <div className="py-20 text-center">
       <h1 className="text-3xl font-bold">Page not found</h1>
-      <Link to="/" className="mt-4 inline-block text-emerald-600 underline">
+      <Link
+        to="/"
+        className="mt-4 inline-block font-bold text-[#f86d29] underline"
+      >
         Back home
       </Link>
     </div>
   );
 }
 
-function AppLayout() {
+// Login handler
+function LoginPage() {
+  const { login } = useApp();
+  const navigate = useNavigate();
+
+  const handleLogin = async (formData) => {
+    await login(formData);
+    navigate("/dashboard");
+  };
+
+  return <Login onLogin={handleLogin} />;
+}
+
+// Signup handler
+function SignupPage() {
+  const { register } = useApp();
+  const navigate = useNavigate();
+
+  const handleSignup = async (formData) => {
+    await register(formData);
+    navigate("/dashboard");
+  };
+
+  return <Signup onSignup={handleSignup} />;
+}
+
+function AppLayout({ isDarkMode, onToggleTheme }) {
   const location = useLocation();
 
   const isAuthPage = ["/login", "/signup", "/register"].includes(
@@ -41,23 +73,37 @@ function AppLayout() {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-800">
-      {!isAuthPage && <Navbar />}
+    <div className="flex min-h-screen flex-col bg-[#f7f7fb] text-[#271C5E]">
+      {!isAuthPage && (
+        <Navbar
+          isDarkMode={isDarkMode}
+          onToggleTheme={onToggleTheme}
+        />
+      )}
+
+      {isAuthPage && (
+        <div className="fixed right-4 top-4 z-50">
+          <ThemeToggle
+            isDarkMode={isDarkMode}
+            onToggle={onToggleTheme}
+          />
+        </div>
+      )}
 
       <div
         className={
           isAuthPage
             ? "flex-1"
-            : "mx-auto w-full max-w-6xl flex-1 px-4 py-8"
+            : "mx-auto w-full max-w-[1480px] flex-1 px-5 py-8 sm:px-8 lg:px-12"
         }
       >
         <Routes>
           <Route path="/" element={<Home />} />
 
           {/* Authentication */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/register" element={<Signup />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/register" element={<SignupPage />} />
 
           {/* Main application */}
           <Route path="/about" element={<About />} />
@@ -77,10 +123,37 @@ function AppLayout() {
 }
 
 export default function App() {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      return window.localStorage.getItem("fitrack-theme") === "dark";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDarkMode ? "dark" : "light";
+    document.documentElement.style.colorScheme = isDarkMode ? "dark" : "light";
+
+    try {
+      window.localStorage.setItem(
+        "fitrack-theme",
+        isDarkMode ? "dark" : "light"
+      );
+    } catch {
+      // Theme remains active even if storage is unavailable.
+    }
+  }, [isDarkMode]);
+
   return (
     <AppProvider>
       <BrowserRouter>
-        <AppLayout />
+        <AppLayout
+          isDarkMode={isDarkMode}
+          onToggleTheme={() =>
+            setIsDarkMode((current) => !current)
+          }
+        />
       </BrowserRouter>
     </AppProvider>
   );
