@@ -63,7 +63,7 @@ export default function Contact() {
                     <span className="eyebrow">We’re here</span>
                     <strong>GOOD<br />ENERGY<br />ONLY.</strong>
                     <p>Send a note and help us make FiTrack better for your training routine.</p>
-                    <span className="contact-star" aria-hidden="true">✳</span>
+                    <span className="contact-star" aria-hidden="true" />
                 </aside>
                 <form onSubmit={onSubmit} noValidate className="contact-form space-y-5">
                 <label className="block">

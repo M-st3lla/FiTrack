@@ -33,7 +33,7 @@ export default function Home() {
             </section>
 
             <div className="home-ticker" aria-label="Train, fuel, repeat">
-                <span>TRAIN</span><i>✳</i><span>FUEL</span><i>✳</i><span>REPEAT</span><i>✳</i><span>SHOW UP</span><i>✳</i><span>TRAIN</span>
+                <span>TRAIN</span><i className="pattern-mark home-ticker-mark" aria-hidden="true" /><span>FUEL</span><i className="pattern-mark home-ticker-mark" aria-hidden="true" /><span>REPEAT</span><i className="pattern-mark home-ticker-mark" aria-hidden="true" /><span>SHOW UP</span><i className="pattern-mark home-ticker-mark" aria-hidden="true" /><span>TRAIN</span>
             </div>
 
             <section className="pathway-section">
@@ -58,7 +58,7 @@ export default function Home() {
                     <p className="eyebrow text-white/65">Start where you are</p>
                     <h2>MAKE A PLAN.<br /><span>MAKE IT YOURS.</span></h2>
                     <p>Set a goal that feels right for you. FiTrack will turn it into a weekly path you can actually follow.</p>
-                    <div className="plan-note"><span>✳</span> Small steps. Real momentum.</div>
+                    <div className="plan-note"><span className="pattern-mark" aria-hidden="true" /> Small steps. Real momentum.</div>
                 </div>
                 <div className="home-plan-form"><GoalForm /></div>
             </section>

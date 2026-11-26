@@ -55,7 +55,7 @@ export default function Nutrition() {
                     <ul className="mt-4 space-y-3 text-sm text-white/65">
                         {data.tips.map((t) => (
                             <li key={t} className="flex gap-2">
-                                <span className="text-[#f86d29]">✳</span>
+                                <span className="pattern-mark nutrition-tip-mark" aria-hidden="true" />
                                 {t}
                             </li>
                         ))}

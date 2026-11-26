@@ -81,7 +81,7 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
 
                 <Link
                   to="/signup"
-                  className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                  className="rounded-md bg-[#f86d29] px-3 py-2 text-sm font-semibold text-[#271C5E] hover:bg-[#ff8c53]"
                 >
                   Sign up
                 </Link>
@@ -145,7 +145,7 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
                 <Link
                   to="/signup"
                   onClick={() => setOpen(false)}
-                  className="rounded-md bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white"
+                  className="rounded-md bg-[#f86d29] px-3 py-2 text-center text-sm font-semibold text-[#271C5E]"
                 >
                   Sign up
                 </Link>

@@ -40,6 +40,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
   padding: 0.7rem 0;
   outline: none;
 }
+.fitness-field option {
+  color: var(--fitrack-ink);
+  background-color: var(--fitrack-surface);
+}
+.fitness-field::placeholder {
+  color: var(--fitrack-muted);
+  opacity: 1;
+}
 
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -106,6 +114,11 @@ html[data-theme="dark"] [class*="divide-slate-"] {
 html[data-theme="dark"] .fitness-field {
   border-bottom-color: var(--fitrack-rule);
   color: var(--fitrack-copy);
+  background-color: var(--fitrack-surface);
+}
+html[data-theme="dark"] .fitness-field option {
+  color: var(--fitrack-copy);
+  background-color: var(--fitrack-surface);
 }
 html[data-theme="dark"] body {
   background-image:
@@ -221,7 +234,15 @@ html[data-theme="dark"] .theme-toggle:hover {
   font-weight: 1000;
   letter-spacing: .08em;
 }
-.home-ticker i { font-style: normal; font-size: 1.15rem; }
+.home-ticker i { font-style: normal; }
+.pattern-mark {
+  display: inline-block;
+  flex: 0 0 auto;
+  background: url("/fitrack-pattern.svg") center / cover no-repeat;
+}
+.home-ticker-mark { width: 1.15rem; height: 1.15rem; }
+.plan-note .pattern-mark { width: 1rem; height: 1rem; vertical-align: middle; }
+.nutrition-tip-mark { width: .9rem; height: .9rem; margin-top: .2rem; }
 .pathway-section {
   display: grid;
   gap: 3rem;
@@ -299,23 +320,40 @@ html[data-theme="dark"] .theme-toggle:hover {
   .home-plan { padding: 3rem 1.5rem; }
 }
 
-.workout-list { border-top: 1px solid var(--fitrack-rule); }
-.workout-row {
-  display: grid;
-  grid-template-columns: minmax(4rem, .18fr) 1fr;
-  gap: clamp(1rem, 3vw, 3rem);
-  border-bottom: 1px solid var(--fitrack-rule);
-  padding: clamp(2rem, 4vw, 3.5rem) 0;
-}
-.workout-row-index { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; }
-.workout-row-index span { color: var(--fitrack-orange); font-size: .85rem; font-weight: 1000; letter-spacing: .12em; }
-.workout-row-index b { font-size: 2rem; }
-.workout-stats { display: flex; flex-wrap: wrap; gap: clamp(1rem, 4vw, 4rem); border-block: 1px solid var(--fitrack-rule); margin-top: 1.4rem; padding: 1rem 0; }
-.workout-stats span { display: flex; flex-direction: column; gap: .3rem; color: var(--fitrack-muted); font-size: .78rem; font-weight: 900; letter-spacing: .1em; }
-.workout-stats b { color: var(--fitrack-ink); font-size: 1.05rem; letter-spacing: -.02em; }
-.workout-exercises { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .5rem 1.5rem; margin-top: 1rem; }
-.workout-exercises li { display: flex; justify-content: space-between; gap: .75rem; border-bottom: 1px solid var(--fitrack-rule); padding: .65rem 0; font-size: .95rem; font-weight: 750; }
-.workout-exercises small { color: var(--fitrack-muted); font-size: .85rem; text-align: right; }
+.workout-image { display: block; background-color: var(--fitrack-ink); background-position: center; background-size: cover; }
+.workout-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 15rem); align-items: end; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--fitrack-rule); padding-bottom: 1.5rem; }
+.workout-type-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
+.workout-filter-chip { border: 1px solid var(--fitrack-rule); border-radius: 999px; padding: .65rem 1rem; color: var(--fitrack-muted); font-size: .9rem; font-weight: 800; transition: border-color .2s, color .2s, background-color .2s; }
+.workout-filter-chip:hover { border-color: var(--fitrack-orange); color: var(--fitrack-ink); }
+.workout-filter-chip.is-active { border-color: var(--fitrack-ink); background-color: var(--fitrack-ink); color: white; }
+.workout-level-filter { display: block; }
+.workout-level-filter .eyebrow { display: block; margin-bottom: .35rem; }
+.workout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 1.25rem; align-items: start; }
+.workout-card { overflow: hidden; border: 1px solid var(--fitrack-rule); border-radius: 1.2rem; background: var(--fitrack-surface); box-shadow: 0 16px 42px -34px rgba(39, 28, 94, .55); }
+.workout-card-visual { position: relative; min-height: 210px; overflow: hidden; background: var(--fitrack-ink); }
+.workout-card-image { position: absolute; inset: 0; transition: transform .35s ease; }
+.workout-card:hover .workout-card-image { transform: scale(1.04); }
+.workout-card-index { position: absolute; top: 1rem; left: 1rem; color: white; font-size: .9rem; font-weight: 900; letter-spacing: .15em; }
+.workout-level-badge { position: absolute; bottom: 1rem; left: 1rem; border: 1px solid rgba(255,255,255,.55); border-radius: 999px; background: rgba(39,28,94,.74); padding: .4rem .8rem; color: white; font-size: .82rem; font-weight: 800; }
+.workout-card-content { padding: clamp(1.1rem, 3vw, 1.5rem); }
+.workout-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
+.workout-card-heading h2 { margin-top: .3rem; font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 1000; letter-spacing: -.055em; line-height: 1; }
+.workout-goal-badge { flex: 0 0 auto; border-radius: 999px; background: var(--fitrack-orange); padding: .45rem .7rem; color: var(--fitrack-ink); font-size: .8rem; font-weight: 900; }
+.workout-card-description { margin-top: .8rem; color: var(--fitrack-muted); font-size: .98rem; line-height: 1.6; }
+.workout-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; border-block: 1px solid var(--fitrack-rule); margin-top: 1.1rem; padding: .85rem 0; }
+.workout-stats span { display: flex; flex-direction: column; gap: .25rem; color: var(--fitrack-muted); font-size: .78rem; font-weight: 800; }
+.workout-stats b { color: var(--fitrack-copy); font-size: .98rem; letter-spacing: -.02em; }
+.workout-exercise-details { margin-top: .8rem; }
+.workout-exercise-details summary { display: flex; justify-content: space-between; gap: .8rem; cursor: pointer; padding: .55rem 0; font-size: .9rem; font-weight: 850; }
+.workout-exercise-details summary span:last-child { color: var(--fitrack-muted); font-size: .82rem; font-weight: 650; }
+.workout-exercises { display: grid; gap: .2rem; margin-top: .4rem; }
+.workout-exercises li { display: flex; justify-content: space-between; gap: .75rem; border-top: 1px solid var(--fitrack-rule); padding: .65rem 0; font-size: .9rem; font-weight: 750; }
+.workout-exercises small { color: var(--fitrack-muted); font-size: .82rem; text-align: right; }
+.workout-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: 1rem; }
+.workout-secondary-link { border: 1px solid var(--fitrack-rule); border-radius: 999px; padding: .75rem 1rem; text-align: center; font-size: .88rem; font-weight: 850; transition: border-color .2s, color .2s; }
+.workout-secondary-link:hover { border-color: var(--fitrack-orange); color: var(--fitrack-orange); }
+.workout-empty { border-block: 1px solid var(--fitrack-rule); padding: 2rem 0; color: var(--fitrack-muted); }
+.workout-mini-image { width: 2.8rem; height: 2.8rem; flex: 0 0 auto; overflow: hidden; border-radius: .65rem; }
 .nutrition-summary { margin: 2rem 0 3rem; background: var(--fitrack-orange); padding: clamp(1.5rem, 4vw, 3rem); color: var(--fitrack-ink); }
 .nutrition-summary p { max-width: 58rem; margin-top: .75rem; font-size: clamp(1.35rem, 3vw, 2.5rem); font-weight: 900; letter-spacing: -.04em; line-height: 1.1; }
 .nutrition-foods li { padding-block: 1.2rem; }
@@ -359,7 +397,7 @@ html[data-theme="dark"] .theme-toggle:hover {
 }
 .about-hero h1 span { color: var(--fitrack-orange); }
 .about-hero > p:last-of-type { position: relative; z-index: 1; max-width: 28rem; margin-top: 2rem; color: rgba(255,255,255,.7); line-height: 1.7; }
-.about-spark { position: absolute; right: 7%; top: 4%; color: var(--fitrack-orange); font-size: clamp(12rem, 30vw, 28rem); line-height: 1; opacity: .14; }
+.about-spark { position: absolute; top: 4%; right: 7%; width: clamp(12rem, 30vw, 28rem); aspect-ratio: 1; background: url("/fitrack-pattern.svg") center / cover no-repeat; opacity: .14; }
 .about-story { display: grid; gap: 2rem; padding: clamp(3rem, 8vw, 7rem) 0; }
 .about-story h2 { margin-top: 1rem; font-size: clamp(2.8rem, 5vw, 5rem); font-weight: 1000; letter-spacing: -.08em; line-height: .9; }
 .about-story h2 span { color: var(--fitrack-purple); }
@@ -374,7 +412,7 @@ html[data-theme="dark"] .theme-toggle:hover {
 .contact-callout { position: relative; overflow: hidden; min-height: 340px; background: var(--fitrack-orange); padding: clamp(1.75rem, 5vw, 3.5rem); color: var(--fitrack-ink); }
 .contact-callout strong { position: relative; z-index: 1; display: block; margin-top: 1.5rem; font-size: clamp(3rem, 8vw, 6rem); font-weight: 1000; letter-spacing: -.09em; line-height: .78; }
 .contact-callout p { position: relative; z-index: 1; max-width: 17rem; margin-top: 1.5rem; font-size: .9rem; line-height: 1.6; }
-.contact-star { position: absolute; top: -1rem; right: -1rem; color: rgba(255,255,255,.25); font-size: 16rem; line-height: 1; }
+.contact-star { position: absolute; top: -1rem; right: -1rem; width: 16rem; aspect-ratio: 1; background: url("/fitrack-pattern.svg") center / cover no-repeat; opacity: .22; }
 .contact-form { width: 100%; max-width: 40rem; }
 @media (min-width: 768px) {
   .schedule-layout { grid-template-columns: .8fr 1.2fr; align-items: start; gap: clamp(2rem, 6vw, 6rem); }
@@ -383,8 +421,8 @@ html[data-theme="dark"] .theme-toggle:hover {
   .contact-layout { grid-template-columns: .85fr 1.15fr; align-items: start; gap: clamp(2rem, 6vw, 6rem); }
 }
 @media (max-width: 640px) {
-  .workout-row { grid-template-columns: 2rem 1fr; gap: .75rem; }
-  .workout-row-index b { font-size: 1.2rem; }
+  .workout-filters { grid-template-columns: 1fr; }
+  .workout-card-visual { min-height: 185px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

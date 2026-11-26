@@ -15,7 +15,7 @@ export default function About() {
                 <p className="eyebrow text-white/60">Built for real life</p>
                 <h1>FITNESS<br />WITHOUT<br /><span>THE FUSS.</span></h1>
                 <p>FiTrack brings your training, nutrition and schedule into one simple, supportive space.</p>
-                <span className="about-spark" aria-hidden="true">✳</span>
+                <span className="about-spark" aria-hidden="true" />
             </section>
             <section className="about-story">
                 <div>

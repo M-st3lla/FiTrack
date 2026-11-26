@@ -1,82 +1,141 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import WorkoutImage from "../components/WorkoutImage";
 import { useApp } from "../context/AppContext";
-import { WORKOUTS } from "../data/workouts";
+import {
+    getTrainingLevelLabel,
+    TRAINING_LEVELS,
+    WORKOUTS,
+} from "../data/workouts";
 
 export default function Workouts() {
     const { profile } = useApp();
     const [filter, setFilter] = useState("all");
-    const list = filter === "all" ? WORKOUTS : WORKOUTS.filter((w) => w.id === filter);
-
-    const chip = (active) =>
-        `border-b-2 px-3 py-3 text-sm font-bold ${active ? "border-[#4023CE] text-[#4023CE]" : "border-transparent text-[#271C5E]/45 hover:text-[#271C5E]"
-        }`;
+    const [levelFilter, setLevelFilter] = useState("all");
+    const list = WORKOUTS.filter((workout) => (
+        (filter === "all" || workout.id === filter) &&
+        (levelFilter === "all" || workout.level === levelFilter)
+    ));
 
     return (
-        <div>
-            <PageHeader title="Find your pace" subtitle="Pick a lane, build a session, and make the next rep count." />
+        <main className="workouts-page">
+            <PageHeader
+                title="Find your pace"
+                subtitle="Choose a workout that fits your experience, then build your next session."
+            />
 
-            <div className="mb-8 flex gap-1 overflow-x-auto border-b border-[#271C5E]/10">
-                <button className={chip(filter === "all")} onClick={() => setFilter("all")}>
-                    All
-                </button>
-                {WORKOUTS.map((w) => (
-                    <button key={w.id} className={chip(filter === w.id)} onClick={() => setFilter(w.id)}>
-                        {w.name}
-                    </button>
-                ))}
-            </div>
+            <section className="workout-filters" aria-label="Filter workouts">
+                <div>
+                    <p className="eyebrow mb-2">Workout type</p>
+                    <div className="workout-type-filters" role="group" aria-label="Workout type">
+                        <button
+                            type="button"
+                            aria-pressed={filter === "all"}
+                            className={`workout-filter-chip ${filter === "all" ? "is-active" : ""}`}
+                            onClick={() => setFilter("all")}
+                        >
+                            All workouts
+                        </button>
+                        {WORKOUTS.map((workout) => (
+                            <button
+                                key={workout.id}
+                                type="button"
+                                aria-pressed={filter === workout.id}
+                                className={`workout-filter-chip ${filter === workout.id ? "is-active" : ""}`}
+                                onClick={() => setFilter(workout.id)}
+                            >
+                                {workout.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-            <div className="workout-list">
-                {list.map((w, index) => (
-                    <article key={w.id} className={`workout-row ${index % 2 ? "workout-row-alt" : ""}`}>
-                        <div className="workout-row-index">
-                            <span>{String(index + 1).padStart(2, "0")}</span>
-                            <b aria-hidden="true">{w.icon}</b>
-                        </div>
-                        <div className="workout-row-main">
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                            <h2 className="text-3xl font-black tracking-tight sm:text-4xl">{w.name}</h2>
-                            {profile?.goal === w.id && (
-                                <span className="rounded-full bg-[#f86d29] px-3 py-1 text-xs font-bold text-[#271C5E]">
-                                    Your goal
+                <label className="workout-level-filter">
+                    <span className="eyebrow">Training level</span>
+                    <select
+                        value={levelFilter}
+                        onChange={(event) => setLevelFilter(event.target.value)}
+                        className="fitness-field"
+                    >
+                        <option value="all">Every level</option>
+                        {TRAINING_LEVELS.map((level) => (
+                            <option key={level.value} value={level.value}>
+                                {level.label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+            </section>
+
+            {list.length ? (
+                <section className="workout-grid" aria-label="Available workouts">
+                    {list.map((workout, index) => (
+                        <article key={workout.id} className="workout-card">
+                            <div className="workout-card-visual">
+                                <WorkoutImage workout={workout} className="workout-card-image" />
+                                <span className="workout-card-index">
+                                    {String(index + 1).padStart(2, "0")}
                                 </span>
-                            )}
-                        </div>
-                        <p className="mt-3 max-w-xl text-sm leading-6 text-[#271C5E]/55">{w.desc}</p>
-                        <div className="workout-stats">
-                            <span><b>{w.level}</b>LEVEL</span>
-                            <span><b>{w.duration} min</b>TIME</span>
-                            <span><b>{w.burn}</b>KCAL / SESSION</span>
-                        </div>
+                                <span className="workout-level-badge">
+                                    {getTrainingLevelLabel(workout.level)}
+                                </span>
+                            </div>
 
-                        <ul className="workout-exercises">
-                            {w.exercises.map((ex) => (
-                                <li key={ex.name}>
-                                    <span>{ex.name}</span><small>{ex.detail}</small>
-                                </li>
-                            ))}
-                        </ul>
+                            <div className="workout-card-content">
+                                <div className="workout-card-heading">
+                                    <div>
+                                        <p className="eyebrow">Training plan</p>
+                                        <h2>{workout.name}</h2>
+                                    </div>
+                                    {profile?.goal === workout.id && (
+                                        <span className="workout-goal-badge">Your goal</span>
+                                    )}
+                                </div>
 
-                        <div className="mt-5 flex flex-wrap gap-3">
-                            <Link
-                                to={`/schedule?workout=${w.id}`}
-                                className="button-orange"
-                            >
-                                Build this session <span aria-hidden="true">↗</span>
-                            </Link>
-                            <Link
-                                to={`/nutrition?goal=${w.id}`}
-                                className="rounded-full border border-[#271C5E]/20 px-5 py-3 text-center text-xs font-black hover:border-[#f86d29]"
-                            >
-                                Fuel guide
-                            </Link>
-                        </div>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        </div>
+                                <p className="workout-card-description">{workout.desc}</p>
+
+                                <div className="workout-stats">
+                                    <span><b>{workout.duration} min</b>Duration</span>
+                                    <span><b>{workout.burn} kcal</b>Per session</span>
+                                    <span><b>{getTrainingLevelLabel(workout.level)}</b>Level</span>
+                                </div>
+
+                                <details className="workout-exercise-details">
+                                    <summary>
+                                        <span>Exercise breakdown</span>
+                                        <span>{workout.exercises.length} movements</span>
+                                    </summary>
+                                    <ul className="workout-exercises">
+                                        {workout.exercises.map((exercise) => (
+                                            <li key={exercise.name}>
+                                                <span>{exercise.name}</span>
+                                                <small>{exercise.detail}</small>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </details>
+
+                                <div className="workout-card-actions">
+                                    <Link to={`/schedule?workout=${workout.id}`} className="button-orange">
+                                        Build this session <span aria-hidden="true">↗</span>
+                                    </Link>
+                                    <Link
+                                        to={`/nutrition?goal=${workout.id}`}
+                                        className="workout-secondary-link"
+                                    >
+                                        Fuel guide
+                                    </Link>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </section>
+            ) : (
+                <p className="workout-empty" role="status">
+                    No workouts match those filters. Choose a different type or training level.
+                </p>
+            )}
+        </main>
     );
 }
