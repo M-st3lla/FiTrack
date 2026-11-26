@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PageHeader from "../components/PageHeader";
+import { apiRequest } from "../api/client";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -7,24 +8,46 @@ export default function Contact() {
     const [form, setForm] = useState({ name: "", email: "", message: "" });
     const [errors, setErrors] = useState({});
     const [sent, setSent] = useState(false);
+    const [apiError, setApiError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const onChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
         setSent(false);
+        setApiError("");
     };
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         const errs = {};
         if (form.name.trim().length < 2) errs.name = "Enter your name (at least 2 characters)";
         if (!emailRe.test(form.email)) errs.email = "Enter a valid email address";
-        if (form.message.trim().length < 10) errs.message = "Message must be at least 10 characters";
+        if (form.message.trim().length < 10 || form.message.trim().length > 2000) {
+            errs.message = "Message must be between 10 and 2000 characters";
+        }
         setErrors(errs);
         if (Object.keys(errs).length) return;
 
-        // TODO: POST to the backend when it exists.
-        setSent(true);
-        setForm({ name: "", email: "", message: "" });
+        setSubmitting(true);
+        setApiError("");
+        try {
+            const result = await apiRequest("/contact", {
+                method: "POST",
+                auth: false,
+                body: {
+                    name: form.name.trim(),
+                    email: form.email.trim(),
+                    message: form.message.trim(),
+                },
+            });
+            setSent(true);
+            setForm({ name: "", email: "", message: "" });
+            return result;
+        } catch (error) {
+            setApiError(error.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const cls = (k) =>
@@ -60,9 +83,10 @@ export default function Contact() {
                 </label>
 
                 {sent && <p className="text-sm font-bold text-[#4023CE]">Thanks! Your message has been sent ✓</p>}
+                {apiError && <p role="alert" className="text-sm text-red-600">{apiError}</p>}
 
-                <button className="rounded-full bg-[#f86d29] px-7 py-3.5 text-sm font-black text-[#271C5E] hover:bg-[#ff8c53]">
-                    Send message
+                <button disabled={submitting} className="rounded-full bg-[#f86d29] px-7 py-3.5 text-sm font-black text-[#271C5E] hover:bg-[#ff8c53] disabled:cursor-not-allowed disabled:opacity-60">
+                    {submitting ? "Sending…" : "Send message"}
                 </button>
                 </form>
             </div>

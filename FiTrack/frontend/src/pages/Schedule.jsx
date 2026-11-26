@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { useApp } from "../context/AppContext";
@@ -6,7 +7,18 @@ import { getWorkout } from "../data/workouts";
 import { DAYS, sortSessions } from "../utils/plan";
 
 export default function Schedule() {
-    const { profile, sessions, workouts, catalogLoading, catalogError, addSessions, removeSession } = useApp();
+    const {
+        user,
+        profile,
+        sessions,
+        workouts,
+        catalogLoading,
+        catalogError,
+        accountLoading,
+        accountError,
+        addSessions,
+        removeSession,
+    } = useApp();
     const [params] = useSearchParams();
     const requestedWorkout = params.get("workout");
     const initialWorkout = getWorkout(requestedWorkout) ? requestedWorkout : profile?.goal ?? "";
@@ -15,6 +27,7 @@ export default function Schedule() {
     const [times, setTimes] = useState({});
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const onToggleDay = (day) => {
         setAvailableDays((selected) => selected.includes(day)
@@ -31,7 +44,7 @@ export default function Schedule() {
         setSaved(false);
     };
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         if (!workoutId) {
             setError("Please choose a workout.");
@@ -47,19 +60,49 @@ export default function Schedule() {
             return;
         }
 
-        const err = addSessions(availableDays.map((day) => ({
-            workoutId,
-            day,
-            time: times[day],
-        })));
+        setSaving(true);
+        const err = await addSessions(availableDays.map((day) => ({
+                workoutId,
+                day,
+                time: times[day],
+            })));
+        setSaving(false);
         if (err) return setError(err);
         setSaved(true);
         setAvailableDays([]);
         setTimes({});
     };
 
+    const onRemove = async (id) => {
+        setError("");
+        try {
+            await removeSession(id);
+        } catch (removeError) {
+            setError(removeError.message);
+        }
+    };
+
     const inputCls = "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2";
     const restDays = DAYS.filter((day) => !availableDays.includes(day));
+
+    if (!user) {
+        return (
+            <div>
+                <PageHeader title="Schedule" subtitle="Save your workout days and times to your account." />
+                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+                    <p className="text-slate-600">Log in or create an account to save and retrieve your sessions.</p>
+                    <div className="mt-4 flex justify-center gap-3">
+                        <Link to="/signup" className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white">Create account</Link>
+                        <Link to="/login" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">Log in</Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (accountLoading) {
+        return <p role="status" className="rounded-xl bg-white p-6 text-sm text-slate-500">Loading your saved sessions…</p>;
+    }
 
     return (
         <div>
@@ -89,6 +132,7 @@ export default function Schedule() {
                     </label>
                     {catalogLoading && <p role="status" className="text-xs text-slate-500">Loading workouts…</p>}
                     {catalogError && <p role="alert" className="text-xs text-red-600">Could not load workouts: {catalogError}</p>}
+                    {accountError && <p role="alert" className="text-xs text-red-600">{accountError}</p>}
                     <fieldset>
                         <legend className="text-sm font-medium">Days you are free to work out</legend>
                         <p className="mt-1 text-xs text-slate-500">Unselected days will be your rest days.</p>
@@ -133,11 +177,14 @@ export default function Schedule() {
                         </fieldset>
                     )}
 
-                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
                     {saved && <p className="text-sm text-emerald-700">Your weekly workout schedule is ready ✓</p>}
 
-                    <button className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
-                        Build my weekly schedule
+                    <button
+                        disabled={saving || catalogLoading || !workouts.length}
+                        className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                        {saving ? "Saving sessions…" : "Build my weekly schedule"}
                     </button>
                     {availableDays.length > 0 && (
                         <p className="text-xs text-slate-500">
@@ -161,10 +208,10 @@ export default function Schedule() {
                                                 {w?.icon ?? "🏋️"} {w?.name ?? "Workout"}
                                             </p>
                                             <p className="text-sm text-slate-500">
-                                                {s.day} · {s.time}
+                                                {s.day}{s.date ? `, ${s.date}` : ""} · {s.time}
                                             </p>
                                         </div>
-                                        <button onClick={() => removeSession(s.id)} className="text-sm text-red-600 hover:underline">
+                                        <button onClick={() => onRemove(s.id)} className="text-sm text-red-600 hover:underline">
                                             Remove
                                         </button>
                                     </li>

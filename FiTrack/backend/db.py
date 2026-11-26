@@ -1,25 +1,24 @@
-"""PostgreSQL connection helpers.
+"""SQLite connection helpers.
 
 This file is the single place where the app connects to the database.
 Every route calls get_db() to obtain a connection for the current request;
 the connection is closed automatically when the request ends.
 """
-import psycopg
-from psycopg.rows import dict_row
+import os
+import sqlite3
 
 import click
 from flask import current_app, g
 
 
 def get_db():
-    """Open (once per request) and return a PostgreSQL connection."""
+    """Open (once per request) and return a SQLite connection."""
     if "db" not in g:
-        database_url = current_app.config.get("DATABASE_URL")
-        if not database_url:
-            raise RuntimeError(
-                "DATABASE_URL must be set to a PostgreSQL connection string."
-            )
-        g.db = psycopg.connect(database_url, row_factory=dict_row)
+        database_path = current_app.config["DATABASE_PATH"]
+        os.makedirs(os.path.dirname(os.path.abspath(database_path)), exist_ok=True)
+        g.db = sqlite3.connect(database_path)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
 
@@ -36,10 +35,7 @@ def init_db():
     db = get_db()
     with current_app.open_resource("schema.sql") as f:
         schema = f.read().decode("utf-8")
-    for statement in schema.split(";"):
-        statement = statement.strip()
-        if statement:
-            db.execute(statement)
+    db.executescript(schema)
     seed(db)
 
 
@@ -47,9 +43,10 @@ def ensure_initialized():
     """Initialize an empty database or repair missing starter catalogue rows."""
     db = get_db()
     tables = {
-        row["table_name"] for row in db.execute(
-            "SELECT table_name FROM information_schema.tables "
-            "WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'"
+        row["name"]
+        for row in db.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT LIKE 'sqlite_%'"
         ).fetchall()
     }
     if not tables:
@@ -60,6 +57,21 @@ def ensure_initialized():
             "The database has tables but no workout catalogue schema; "
             "run 'flask --app app init-db' to recreate it."
         )
+
+    profile_columns = {
+        row["name"] for row in db.execute("PRAGMA table_info(profiles)").fetchall()
+    }
+    if "goal_category_id" not in profile_columns:
+        db.execute(
+            "ALTER TABLE profiles ADD COLUMN goal_category_id INTEGER "
+            "REFERENCES workout_categories(id) ON DELETE SET NULL"
+        )
+    if "goal_weeks" not in profile_columns:
+        db.execute(
+            "ALTER TABLE profiles ADD COLUMN goal_weeks INTEGER "
+            "CHECK (goal_weeks IS NULL OR goal_weeks BETWEEN 1 AND 52)"
+        )
+    db.commit()
 
     from seed_data import seed
 

@@ -1,38 +1,20 @@
 import os
 import sys
-import uuid
 from datetime import date, timedelta
 
 import pytest
-import psycopg
-from psycopg import sql
-from psycopg.conninfo import make_conninfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app import create_app  # noqa: E402
 
 
 @pytest.fixture()
-def client():
-    database_url = os.environ.get("TEST_DATABASE_URL")
-    if not database_url:
-        pytest.skip("Set TEST_DATABASE_URL to run tests against PostgreSQL.")
-
-    schema_name = f"fitrack_test_{uuid.uuid4().hex}"
-    with psycopg.connect(database_url, autocommit=True) as admin:
-        admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema_name)))
-
-    test_database_url = make_conninfo(
-        database_url, options=f"-c search_path={schema_name}"
-    )
-    try:
-        app = create_app({"TESTING": True, "DATABASE_URL": test_database_url})
-        yield app.test_client()
-    finally:
-        with psycopg.connect(database_url, autocommit=True) as admin:
-            admin.execute(
-                sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema_name))
-            )
+def client(tmp_path):
+    app = create_app({
+        "TESTING": True,
+        "DATABASE_PATH": str(tmp_path / "fitrack_test.sqlite3"),
+    })
+    yield app.test_client()
 
 
 @pytest.fixture()
@@ -47,15 +29,30 @@ def future(days):
     return (date.today() + timedelta(days=days)).isoformat()
 
 
-def test_health_and_seeded_catalogue(client):
+def test_health_and_seeded_catalogue(client, auth):
+    assert client.get("/").get_json() == {
+        "service": "FiTrack API",
+        "status": "ok",
+        "health": "/api/health",
+        "frontend": "http://127.0.0.1:5173",
+    }
     assert client.get("/api/health").get_json() == {"status": "ok"}
-    workouts = client.get("/api/workouts").get_json()["workouts"]
+    workouts = client.get("/api/workouts", headers=auth).get_json()["workouts"]
     assert len(workouts) == 5
-    detail = client.get(f"/api/workouts/{workouts[0]['id']}").get_json()["workout"]
+    detail = client.get(
+        f"/api/workouts/{workouts[0]['id']}", headers=auth
+    ).get_json()["workout"]
     assert len(detail["exercises"]) >= 5
-    tips = client.get("/api/nutrition?category_id=1").get_json()["nutrition"]
+    tips = client.get(
+        "/api/nutrition?category_id=1", headers=auth
+    ).get_json()["nutrition"]
     assert tips and isinstance(tips[0]["foods"], list)
-    assert client.get("/api/workouts/999").status_code == 404
+    assert client.get("/api/workouts/999", headers=auth).status_code == 404
+
+
+def test_workouts_and_nutrition_require_authentication(client):
+    for endpoint in ("/api/workouts", "/api/workouts/1", "/api/nutrition"):
+        assert client.get(endpoint).status_code == 401
 
 
 def test_seed_is_idempotent_and_repairs_missing_rows(client):
@@ -76,11 +73,11 @@ def test_seed_is_idempotent_and_repairs_missing_rows(client):
         ).fetchone()["count"] == 15
 
         database.execute(
-            "DELETE FROM exercises WHERE category_id = %s AND name = %s", (1, "Deadlift")
+            "DELETE FROM exercises WHERE category_id = ? AND name = ?", (1, "Deadlift")
         )
         seed(database)
         assert database.execute(
-            "SELECT COUNT(*) AS count FROM exercises WHERE category_id = %s", (1,)
+            "SELECT COUNT(*) AS count FROM exercises WHERE category_id = ?", (1,)
         ).fetchone()["count"] == 5
 
 
@@ -98,17 +95,45 @@ def test_register_login_and_auth_rules(client, auth):
     assert client.get("/api/profile", headers={"Authorization": "Bearer junk"}).status_code == 401
 
 
+def test_register_persists_selected_goal(client):
+    response = client.post("/api/auth/register", json={
+        "name": "Goal User", "email": "goal@example.com", "password": "secret123",
+        "goal_category": "Strength Training",
+    })
+    assert response.status_code == 201
+    headers = {"Authorization": f"Bearer {response.get_json()['token']}"}
+    assert client.get("/api/profile", headers=headers).get_json()["profile"][
+        "goal_category_id"
+    ] == 1
+
+
 def test_profile(client, auth):
     r = client.put("/api/profile", headers=auth, json={
         "age": 25, "weight_kg": 70, "height_cm": 175, "calories_to_burn": 500,
-        "fitness_level": "beginner"})
+        "fitness_level": "beginner", "goal_category_id": 1, "goal_weeks": 8})
     assert r.status_code == 200
     assert r.get_json()["profile"]["bmi"] == 22.9
     # update again (upsert path)
     client.put("/api/profile", headers=auth, json={"age": 26, "weight_kg": 69})
-    assert client.get("/api/profile", headers=auth).get_json()["profile"]["age"] == 26
+    profile = client.get("/api/profile", headers=auth).get_json()["profile"]
+    assert profile["age"] == 26
+    assert profile["height_cm"] == 175
+    assert profile["goal_category_id"] == 1
+    assert profile["goal_weeks"] == 8
     bad = client.put("/api/profile", headers=auth, json={"age": 3, "fitness_level": "pro"})
     assert bad.status_code == 422
+
+
+def test_reset_dashboard_clears_user_data(client, auth):
+    client.put("/api/profile", headers=auth, json={"age": 30, "goal_category_id": 1})
+    client.post("/api/my-workouts", headers=auth, json={"category_id": 1})
+    client.post("/api/sessions", headers=auth, json={
+        "category_id": 1, "session_date": future(1), "start_time": "10:00"})
+
+    assert client.delete("/api/dashboard", headers=auth).status_code == 200
+    assert "age" not in client.get("/api/profile", headers=auth).get_json()["profile"]
+    assert client.get("/api/sessions", headers=auth).get_json()["sessions"] == []
+    assert client.get("/api/my-workouts", headers=auth).get_json()["workouts"] == []
 
 
 def test_selected_workouts(client, auth):

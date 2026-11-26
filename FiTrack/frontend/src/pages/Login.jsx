@@ -13,7 +13,7 @@ import {
     CalendarDays,
 } from "lucide-react";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, authState }) {
     const [form, setForm] = useState({
         email: "",
         password: "",
@@ -269,6 +269,7 @@ export default function Login({ onLogin }) {
 
                             <Link
                                 to="/signup"
+                                state={authState}
                                 className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-[#f86d29] hover:underline"
                             >
                                 Create an account

@@ -1,5 +1,6 @@
-
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
 import { useApp } from "../context/AppContext";
 import { getWorkout } from "../data/workouts";
 import { DAYS, computePlan, sortSessions } from "../utils/plan";
@@ -19,18 +20,72 @@ function Stat({ label, value, sub }) {
 }
 
 export default function Dashboard() {
-    const { profile, sessions, toggleDone, removeSession, resetAll } = useApp();
-
+    const {
+        user,
+        profile,
+        sessions,
+        workouts,
+        accountLoading,
+        accountError,
+        toggleDone,
+        removeSession,
+        resetAll,
+    } = useApp();
+    const [actionError, setActionError] = useState("");
     const plan = computePlan(profile);
     const sorted = sortSessions(sessions);
 
-    const burned = sessions
-        .filter((s) => s.done)
-        .reduce((sum, s) => sum + getWorkout(s.workoutId).burn, 0);
+    const burned = sessions.filter((s) => s.done).reduce((sum, s) => {
+        const workout = workouts.find((item) => item.id === s.workoutId) ?? getWorkout(s.workoutId);
+        return sum + (workout?.burn ?? 0);
+    }, 0);
+    const pct = profile ? Math.min(100, Math.round((burned / profile.caloriesToBurn) * 100)) : 0;
 
-    const pct = profile
-        ? Math.min(100, Math.round((burned / profile.caloriesToBurn) * 100))
-        : 0;
+    const onToggleDone = async (id) => {
+        setActionError("");
+        try {
+            await toggleDone(id);
+        } catch (error) {
+            setActionError(error.message);
+        }
+    };
+
+    const onRemove = async (id) => {
+        setActionError("");
+        try {
+            await removeSession(id);
+        } catch (error) {
+            setActionError(error.message);
+        }
+    };
+
+    const onReset = async () => {
+        setActionError("");
+        try {
+            await resetAll();
+        } catch (error) {
+            setActionError(error.message);
+        }
+    };
+
+    if (!user) {
+        return (
+            <div>
+                <PageHeader title="Dashboard" subtitle="Your saved goals and sessions, loaded from your account." />
+                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+                    <p className="text-slate-600">Log in or create an account to see your saved fitness data.</p>
+                    <div className="mt-4 flex justify-center gap-3">
+                        <Link to="/signup" className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white">Create account</Link>
+                        <Link to="/login" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">Log in</Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (accountLoading) {
+        return <p role="status" className="rounded-xl bg-white p-6 text-sm text-slate-500">Loading your dashboard…</p>;
+    }
 
     return (
         <div>
@@ -46,6 +101,9 @@ export default function Dashboard() {
                     Every session is a vote for the person you want to become. Keep going.
                 </p>
             </div>
+            {(accountError || actionError) && (
+                <p role="alert" className="mb-4 text-sm text-red-600">{actionError || accountError}</p>
+            )}
 
             {!plan ? (
                 <div className="border-y border-[#271C5E]/10 py-10 text-center">
@@ -148,7 +206,7 @@ export default function Dashboard() {
                                                 }`}
                                         >
                                             <p className="font-semibold">{s.time}</p>
-                                            <p>{getWorkout(s.workoutId).name}</p>
+                                            <p>{(workouts.find((item) => item.id === s.workoutId) ?? getWorkout(s.workoutId))?.name ?? "Workout"}</p>
                                         </div>
                                     ))
                                 )}
@@ -177,7 +235,7 @@ export default function Dashboard() {
                 ) : (
                     <ul className="mt-3 divide-y divide-slate-100">
                         {sorted.map((s) => {
-                            const w = getWorkout(s.workoutId);
+                            const w = workouts.find((item) => item.id === s.workoutId) ?? getWorkout(s.workoutId);
 
                             return (
                                 <li
@@ -191,26 +249,19 @@ export default function Dashboard() {
                                                     : ""
                                                 }`}
                                         >
-                                            {w.icon} {w.name}
+                                            {w?.icon ?? "🏋️"} {w?.name ?? "Workout"}
                                         </p>
 
                                         <p className="text-sm text-slate-500">
-                                            {s.day} · {s.time} · ~{w.burn} kcal
+                                            {s.day} · {s.time}{w?.burn ? ` · ~${w.burn} kcal` : ""}
                                         </p>
                                     </div>
 
                                     <div className="flex gap-3 text-sm">
-                                        <button
-                                            onClick={() => toggleDone(s.id)}
-                                            className="text-[#f86d29] hover:underline"
-                                        >
+                                        <button onClick={() => onToggleDone(s.id)} className="text-emerald-700 hover:underline">
                                             {s.done ? "Undo" : "Mark done"}
                                         </button>
-
-                                        <button
-                                            onClick={() => removeSession(s.id)}
-                                            className="text-red-600 hover:underline"
-                                        >
+                                        <button onClick={() => onRemove(s.id)} className="text-red-600 hover:underline">
                                             Remove
                                         </button>
                                     </div>
@@ -223,10 +274,7 @@ export default function Dashboard() {
 
             {(profile || sessions.length > 0) && (
                 <button
-                    onClick={() =>
-                        window.confirm("Clear your goal and all sessions?") &&
-                        resetAll()
-                    }
+                    onClick={() => window.confirm("Clear your goal and all sessions?") && onReset()}
                     className="mt-6 text-sm text-slate-500 underline"
                 >
                     Reset everything

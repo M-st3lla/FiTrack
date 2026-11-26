@@ -19,26 +19,26 @@ def dashboard():
     uid = g.user["id"]
     today = date.today()
 
-    profile = db.execute("SELECT * FROM profiles WHERE user_id = %s", (uid,)).fetchone()
+    profile = db.execute("SELECT * FROM profiles WHERE user_id = ?", (uid,)).fetchone()
     selected = db.execute(
         "SELECT c.id, c.name FROM user_workouts uw "
-        "JOIN workout_categories c ON c.id = uw.category_id WHERE uw.user_id = %s", (uid,)
+        "JOIN workout_categories c ON c.id = uw.category_id WHERE uw.user_id = ?", (uid,)
     ).fetchall()
     goals = db.execute(
         "SELECT g.id, g.title, c.name AS workout, g.start_date, g.end_date, g.status "
         "FROM goals g JOIN workout_categories c ON c.id = g.category_id "
-        "WHERE g.user_id = %s AND g.status = 'active' ORDER BY g.end_date", (uid,)
+        "WHERE g.user_id = ? AND g.status = 'active' ORDER BY g.end_date", (uid,)
     ).fetchall()
     upcoming = db.execute(
-        SESSION_SELECT + " WHERE s.user_id = %s AND s.session_date >= %s AND s.status = 'scheduled' "
-        "ORDER BY s.session_date, s.start_time LIMIT 10", (uid, today)
+        SESSION_SELECT + " WHERE s.user_id = ? AND s.session_date >= ? AND s.status = 'scheduled' "
+        "ORDER BY s.session_date, s.start_time LIMIT 10", (uid, today.isoformat())
     ).fetchall()
     stats = db.execute(
         "SELECT "
-        " SUM(CASE WHEN status='scheduled' AND session_date >= %s THEN 1 ELSE 0 END) AS upcoming, "
+        " SUM(CASE WHEN status='scheduled' AND session_date >= ? THEN 1 ELSE 0 END) AS upcoming, "
         " SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS completed, "
         " COALESCE(SUM(CASE WHEN status='completed' THEN duration_min END), 0) AS minutes_trained "
-        "FROM sessions WHERE user_id = %s", (today, uid)
+        "FROM sessions WHERE user_id = ?", (today.isoformat(), uid)
     ).fetchone()
 
     return jsonify({
@@ -53,3 +53,15 @@ def dashboard():
             "minutes_trained": stats["minutes_trained"] or 0,
         },
     })
+
+
+@bp.delete("")
+@login_required
+def reset_dashboard():
+    """Clear the authenticated user's profile, goals, sessions, and selections."""
+    db = get_db()
+    user_id = g.user["id"]
+    for table in ("sessions", "goals", "user_workouts", "profiles"):
+        db.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
+    db.commit()
+    return jsonify({"message": "Your fitness data has been cleared."})

@@ -15,7 +15,7 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    # Connect to PostgreSQL and initialize a new or incomplete catalogue.
+    # Connect to SQLite and initialize a new or incomplete catalogue.
     db.init_app(app)
     with app.app_context():
         db.ensure_initialized()
@@ -33,6 +33,15 @@ def create_app(test_config=None):
     for bp in (auth_bp, profile_bp, workouts_bp, nutrition_bp,
                schedule_bp, goals_bp, contact_bp, dashboard_bp):
         app.register_blueprint(bp)
+
+    @app.get("/")
+    def index():
+        return jsonify({
+            "service": "FiTrack API",
+            "status": "ok",
+            "health": "/api/health",
+            "frontend": "http://127.0.0.1:5173",
+        })
 
     # CORS so your HTML/JS front end (another origin) can call the API
     @app.after_request

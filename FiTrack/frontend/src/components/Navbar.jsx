@@ -18,7 +18,6 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
   const [open, setOpen] = useState(false);
   const { user, logout } = useApp();
   const navigate = useNavigate();
-
   const item = ({ isActive }) =>
     `block px-3 py-2 text-sm font-bold transition ${isActive
       ? "text-[#f86d29]"
@@ -124,7 +123,6 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
               {label}
             </NavLink>
           ))}
-
           <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2">
             {user ? (
               <button

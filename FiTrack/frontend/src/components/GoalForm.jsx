@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { WORKOUTS } from "../data/workouts";
 
 // Rules: [min, max, label]
 const RULES = {
   age: [12, 100, "Age"],
   weight: [20, 300, "Weight (kg)"],
   height: [100, 250, "Height (cm)"],
-  caloriesToBurn: [100, 100000, "Calories to burn"],
+  caloriesToBurn: [100, 10000, "Calories to burn"],
   weeks: [1, 52, "Period (weeks)"],
 };
 
@@ -30,7 +29,50 @@ function Field({ name, label, value, onChange, error, hint }) {
 }
 
 export default function GoalForm() {
-  const { profile, setProfile } = useApp();
+  const {
+    user,
+    profile,
+    workouts,
+    catalogLoading,
+    accountLoading,
+    accountError,
+    saveProfile,
+  } = useApp();
+  if (!user) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Save your fitness plan</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Create an account or log in so your profile and goals are saved to the database.
+        </p>
+        <div className="mt-5 flex gap-3">
+          <Link to="/signup" className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white">
+            Create account
+          </Link>
+          <Link to="/login" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold">
+            Log in
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (accountLoading) {
+    return <p role="status" className="rounded-xl bg-white p-6 text-sm text-slate-500">Loading your saved plan…</p>;
+  }
+
+  return (
+    <GoalFormFields
+      profile={profile}
+      workouts={workouts}
+      catalogLoading={catalogLoading}
+      accountError={accountError}
+      saveProfile={saveProfile}
+    />
+  );
+}
+
+function GoalFormFields({ profile, workouts, catalogLoading, accountError, saveProfile }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     age: profile?.age ?? "",
@@ -41,10 +83,12 @@ export default function GoalForm() {
     goal: profile?.goal ?? "",
   });
   const [errors, setErrors] = useState({});
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     const errs = {};
     Object.entries(RULES).forEach(([key, [min, max, label]]) => {
@@ -56,26 +100,36 @@ export default function GoalForm() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
-    setProfile({
-      age: Number(form.age),
-      weight: Number(form.weight),
-      height: Number(form.height),
-      caloriesToBurn: Number(form.caloriesToBurn),
-      weeks: Number(form.weeks),
-      goal: form.goal,
-    });
-    navigate("/dashboard");
+    setSaving(true);
+    setSaveError("");
+    try {
+      await saveProfile({
+        age: Number(form.age),
+        weight: Number(form.weight),
+        height: Number(form.height),
+        caloriesToBurn: Number(form.caloriesToBurn),
+        weeks: Number(form.weeks),
+        goal: form.goal,
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      setSaveError(error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-  <form onSubmit={onSubmit} noValidate className="fitness-form rounded-[1.5rem] bg-white p-6 text-[#271C5E] shadow-[0_24px_70px_-35px_rgba(39,28,94,.7)]">
-    <div className="flex items-end justify-between">
-      <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f86d29]">Personal plan</p>
-        <h2 className="mt-1 text-2xl font-black">Set your goal</h2>
+    <form onSubmit={onSubmit} noValidate className="fitness-form rounded-[1.5rem] bg-white p-6 text-[#271C5E] shadow-[0_24px_70px_-35px_rgba(39,28,94,.7)]">
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f86d29]">Personal plan</p>
+          <h2 className="mt-1 text-2xl font-black">Set your goal</h2>
+        </div>
+        <span className="text-3xl text-[#f86d29]">＋</span>
       </div>
-      <span className="text-3xl text-[#f86d29]">＋</span>
-    </div>
+      <p className="mb-4 mt-2 text-sm text-[#271C5E]/60">Tell us about you and we’ll save a weekly path to your account.</p>
+      {accountError && <p role="alert" className="mb-4 text-sm text-red-600">{accountError}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="age" label="Age" value={form.age} onChange={onChange} error={errors.age} />
@@ -102,21 +156,24 @@ export default function GoalForm() {
             }`}
           >
             <option value="">Select a goal</option>
-            {WORKOUTS.map((w) => (
+            {workouts.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.name}
               </option>
             ))}
           </select>
           {errors.goal && <span className="text-xs text-red-600">{errors.goal}</span>}
+          {catalogLoading && <span role="status" className="text-xs text-slate-500">Loading workout categories…</span>}
         </label>
       </div>
 
+      {saveError && <p role="alert" className="mt-4 text-sm text-red-600">{saveError}</p>}
       <button
         type="submit"
-        className="mt-6 w-full rounded-full bg-[#f86d29] px-4 py-3 text-sm font-black text-[#271C5E] transition hover:bg-[#ff8c53]"
+        disabled={saving || catalogLoading || !workouts.length}
+        className="mt-6 w-full rounded-full bg-[#f86d29] px-4 py-3 text-sm font-black text-[#271C5E] transition hover:bg-[#ff8c53] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {profile ? "Update my plan" : "Build my plan"}
+        {saving ? "Saving…" : profile?.goal && profile?.age ? "Update my plan" : "Build my plan"}
       </button>
     </form>
   );

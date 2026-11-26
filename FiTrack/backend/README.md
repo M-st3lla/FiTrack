@@ -1,35 +1,41 @@
-# FiTrack Backend (Flask + PostgreSQL)
+# FiTrack Backend (Flask + SQLite)
 
 REST API for the Gym Workout and Nutrition Management System.
 
 ## Setup
 
 ```bash
-cd fitrack-backend
+cd backend
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create a PostgreSQL database named `fitrack`, then set the connection string
+The API uses SQLite and creates `instance/fitrack.sqlite3` automatically. No
+database server setup is required. To use a different file, set `DATABASE_PATH`
 before starting the API:
 
 ```powershell
-$env:DATABASE_URL = "postgresql://USER:PASSWORD@localhost:5432/fitrack"
+$env:DATABASE_PATH = "C:\path\to\fitrack.sqlite3"
 python app.py
 ```
 
 The schema and starter catalogue are initialized automatically on first run;
 missing starter rows are repaired at startup. `flask --app app init-db` drops
-and recreates all application tables in the configured database schema, so it
-deletes existing data. Run tests against a PostgreSQL database with:
+and recreates all application tables in the configured database file, so it
+deletes existing data. PostgreSQL data is not migrated automatically. Run tests
+with:
 
 ```powershell
-$env:TEST_DATABASE_URL = "postgresql://USER:PASSWORD@localhost:5432/fitrack_test"
 pytest
 ```
 
-Tests create and remove a uniquely named temporary schema in that database.
+Tests use isolated temporary SQLite database files.
+The frontend's signup and login screens use the authentication endpoints;
+profile, goal preferences, and scheduled sessions are then loaded and saved per
+account. Existing browser-only profile and session data is imported at the
+account's first login. Contact form submissions are stored in
+`contact_messages`.
 
 The Vite frontend proxies `/api` requests to `http://127.0.0.1:5000` during
 development. Start the frontend separately with `cd ../frontend && npm run dev`.
@@ -40,7 +46,7 @@ For a separately hosted API, set `VITE_API_BASE_URL` to its `/api` URL.
 | File | Purpose |
 |---|---|
 | `app.py` | Creates the app, connects the DB, registers routes, CORS, JSON errors |
-| `config.py` | Settings (secret key, PostgreSQL connection string, CORS origin) |
+| `config.py` | Settings (secret key, SQLite database file, CORS origin) |
 | `db.py` | **Database connection** (`get_db()`), `init_db()` |
 | `schema.sql` | **Table definitions** |
 | `seed_data.py` | Starter workouts, exercises, nutrition tips |
@@ -56,12 +62,12 @@ For a separately hosted API, set `VITE_API_BASE_URL` to its `/api` URL.
 |---|---|---|---|
 | POST | /api/auth/register | | Create account, returns token |
 | POST | /api/auth/login | | Log in, returns token |
-| GET/PUT | /api/profile | yes | Age, weight_kg, height_cm, calories_to_burn, fitness_level |
-| GET | /api/workouts | | All workout categories |
-| GET | /api/workouts/<id> | | Category + exercises |
+| GET/PUT | /api/profile | yes | Body measurements, calorie target, workout category, and plan duration |
+| GET | /api/workouts | yes | All workout categories |
+| GET | /api/workouts/<id> | yes | Category + exercises |
 | GET/POST | /api/my-workouts | yes | Workouts the user selected |
 | DELETE | /api/my-workouts/<category_id> | yes | Unselect |
-| GET | /api/nutrition?category_id= | | Food/nutrition recommendations |
+| GET | /api/nutrition?category_id= | yes | Food/nutrition recommendations |
 | POST/GET | /api/sessions | yes | Schedule / list sessions (`?from=&to=&status=`) |
 | GET | /api/sessions/timetable | yes | Upcoming sessions grouped by date |
 | GET/PUT/DELETE | /api/sessions/<id> | yes | View / change / delete a session |
@@ -70,6 +76,7 @@ For a separately hosted API, set `VITE_API_BASE_URL` to its `/api` URL.
 | GET | /api/goals/<id>/plan | yes | Week-by-week path to the goal |
 | POST | /api/goals/<id>/schedule | yes | Auto-create the plan's sessions |
 | GET | /api/dashboard | yes | Everything for the dashboard page |
+| DELETE | /api/dashboard | yes | Clear the signed-in user's profile, goals, sessions, and selections |
 | POST | /api/contact | | Validated contact form |
 | GET | /api/health | | Server check |
 

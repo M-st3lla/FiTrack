@@ -101,39 +101,37 @@ def seed(db):
     """Insert or repair the starter catalogue without creating duplicates."""
     for name, (description, exercises, tips) in CATALOGUE.items():
         category = db.execute(
-            "SELECT id FROM workout_categories WHERE name = %s", (name,)
+            "SELECT id FROM workout_categories WHERE name = ?", (name,)
         ).fetchone()
         if category is None:
             cur = db.execute(
-                "INSERT INTO workout_categories (name, description) VALUES (%s, %s) RETURNING id",
+                "INSERT INTO workout_categories (name, description) VALUES (?, ?)",
                 (name, description),
             )
-            category_id = cur.fetchone()["id"]
+            category_id = cur.lastrowid
         else:
             category_id = category["id"]
 
         existing_exercises = {
             row["name"] for row in db.execute(
-                "SELECT name FROM exercises WHERE category_id = %s", (category_id,)
+                "SELECT name FROM exercises WHERE category_id = ?", (category_id,)
             ).fetchall()
         }
-        with db.cursor() as cursor:
-            cursor.executemany(
-                "INSERT INTO exercises (category_id, name, description, sets, reps, duration_min) "
-                "VALUES (%s, %s, %s, %s, %s, %s)",
-                [(category_id, *exercise) for exercise in exercises
-                 if exercise[0] not in existing_exercises],
-            )
+        db.executemany(
+            "INSERT INTO exercises (category_id, name, description, sets, reps, duration_min) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [(category_id, *exercise) for exercise in exercises
+             if exercise[0] not in existing_exercises],
+        )
 
         existing_tips = {
             row["title"] for row in db.execute(
-                "SELECT title FROM nutrition_tips WHERE category_id = %s", (category_id,)
+                "SELECT title FROM nutrition_tips WHERE category_id = ?", (category_id,)
             ).fetchall()
         }
-        with db.cursor() as cursor:
-            cursor.executemany(
-                "INSERT INTO nutrition_tips (category_id, title, foods, description) "
-                "VALUES (%s, %s, %s, %s)",
-                [(category_id, *tip) for tip in tips if tip[0] not in existing_tips],
-            )
+        db.executemany(
+            "INSERT INTO nutrition_tips (category_id, title, foods, description) "
+            "VALUES (?, ?, ?, ?)",
+            [(category_id, *tip) for tip in tips if tip[0] not in existing_tips],
+        )
     db.commit()

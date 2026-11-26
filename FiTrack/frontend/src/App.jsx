@@ -5,6 +5,7 @@ import {
   Routes,
   Route,
   Link,
+  Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -39,30 +40,51 @@ function NotFound() {
   );
 }
 
-// Login handler
+function getReturnPath(location) {
+  const from = location.state?.from;
+  if (!from || typeof from.pathname !== "string" || !from.pathname.startsWith("/")) {
+    return "/dashboard";
+  }
+  return `${from.pathname}${from.search || ""}${from.hash || ""}`;
+}
+
+function RequireLogin({ children }) {
+  const { isAuthenticated, accountLoading } = useApp();
+  const location = useLocation();
+
+  if (accountLoading) {
+    return <p role="status" className="p-8 text-center">Checking your account…</p>;
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
 function LoginPage() {
   const { login } = useApp();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogin = async (formData) => {
     await login(formData);
-    navigate("/dashboard");
+    navigate(getReturnPath(location), { replace: true });
   };
 
-  return <Login onLogin={handleLogin} />;
+  return <Login onLogin={handleLogin} authState={location.state} />;
 }
 
-// Signup handler
 function SignupPage() {
-  const { register } = useApp();
+  const { signup } = useApp();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const handleSignup = async (formData) => {
-    await register(formData);
-    navigate("/dashboard");
+    await signup(formData);
+    navigate(getReturnPath(location), { replace: true });
   };
 
-  return <Signup onSignup={handleSignup} />;
+  return <Signup onSignup={handleSignup} authState={location.state} />;
 }
 
 function AppLayout({ isDarkMode, onToggleTheme }) {
@@ -107,9 +129,9 @@ function AppLayout({ isDarkMode, onToggleTheme }) {
 
           {/* Main application */}
           <Route path="/about" element={<About />} />
-          <Route path="/workouts" element={<Workouts />} />
-          <Route path="/nutrition" element={<Nutrition />} />
-          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/workouts" element={<RequireLogin><Workouts /></RequireLogin>} />
+          <Route path="/nutrition" element={<RequireLogin><Nutrition /></RequireLogin>} />
+          <Route path="/schedule" element={<RequireLogin><Schedule /></RequireLogin>} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/contact" element={<Contact />} />
 

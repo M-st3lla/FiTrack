@@ -15,13 +15,13 @@ import {
     CalendarDays,
 } from "lucide-react";
 
-export default function Signup({ onSignup }) {
+export default function Signup({ onSignup, authState }) {
     const [form, setForm] = useState({
         fullName: "",
         email: "",
         password: "",
         confirmPassword: "",
-        goal: "Build strength",
+        goal: "Strength Training",
         terms: false,
     });
 
@@ -259,12 +259,12 @@ export default function Signup({ onSignup }) {
                                     onChange={update}
                                     className="w-full rounded-xl border border-[#d8d5e8] bg-white px-4 py-3.5 text-sm text-[#271C5E] outline-none focus:border-[#482AC6] focus:ring-4 focus:ring-[#482AC6]/10"
                                 >
-                                    <option>Build strength</option>
-                                    <option>Build muscle</option>
-                                    <option>Improve cardiovascular fitness</option>
-                                    <option>Manage my weight</option>
-                                    <option>Improve general fitness</option>
-                                    <option>Build healthier habits</option>
+                                    <option value="Strength Training">Build strength</option>
+                                    <option value="Muscle Building">Build muscle</option>
+                                    <option value="Cardio">Improve cardiovascular fitness</option>
+                                    <option value="Weight Loss">Manage my weight</option>
+                                    <option value="General Fitness">Improve general fitness</option>
+                                    <option value="General Fitness">Build healthier habits</option>
                                 </select>
                             </div>
 
@@ -379,7 +379,7 @@ export default function Signup({ onSignup }) {
                         {/* LOGIN LINK */}
                         <p className="mt-7 text-center text-sm text-[#271C5E]">
                             Already have an account?{" "}
-                            <Link to="/login" className="font-bold text-[#f86d29] hover:underline">
+                            <Link to="/login" state={authState} className="font-bold text-[#f86d29] hover:underline">
                                 Log in
                             </Link>
                         </p>

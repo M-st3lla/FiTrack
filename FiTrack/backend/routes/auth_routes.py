@@ -1,8 +1,8 @@
 """Register and log in."""
-from psycopg.errors import UniqueViolation
+import sqlite3
 
-from flask import Blueprint, jsonify
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import Blueprint, jsonify  # type: ignore[import-unresolved]
+from werkzeug.security import check_password_hash, generate_password_hash  # type: ignore[import-unresolved]
 
 from auth import make_token
 from db import get_db
@@ -28,21 +28,43 @@ def register():
         errors["email"] = "Enter a valid email address."
     if len(password) < 8:
         errors["password"] = "Password must be at least 8 characters."
+
+    goal_category = data.get("goal_category")
+    category_id = None
+    if goal_category is not None:
+        if not isinstance(goal_category, str):
+            errors["goal_category"] = "Choose a valid workout category."
+        else:
+            category = get_db().execute(
+                "SELECT id FROM workout_categories WHERE name = ?", (goal_category,)
+            ).fetchone()
+            if category is None:
+                errors["goal_category"] = "Choose a valid workout category."
+            else:
+                category_id = category["id"]
     if errors:
         return error("Validation failed.", 422, errors)
 
     db = get_db()
     try:
         cur = db.execute(
-            "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id",
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
             (name, email, generate_password_hash(password)),
         )
+        user_id = cur.lastrowid
+        if category_id is not None:
+            db.execute(
+                "INSERT INTO profiles (user_id, goal_category_id) VALUES (?, ?)",
+                (user_id, category_id),
+            )
         db.commit()
-    except UniqueViolation:
+    except sqlite3.IntegrityError as exc:
         db.rollback()
-        return error("An account with that email already exists.", 409)
+        if "users.email" in str(exc):
+            return error("An account with that email already exists.", 409)
+        raise
 
-    user = {"id": cur.fetchone()["id"], "name": name, "email": email}
+    user = {"id": user_id, "name": name, "email": email}
     return jsonify({"user": user, "token": make_token(user["id"])}), 201
 
 
@@ -55,7 +77,7 @@ def login():
     email = str(data.get("email", "")).strip().lower()
     password = str(data.get("password", ""))
 
-    row = get_db().execute("SELECT * FROM users WHERE email = %s", (email,)).fetchone()
+    row = get_db().execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):
         return error("Incorrect email or password.", 401)
 

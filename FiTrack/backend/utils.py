@@ -25,7 +25,7 @@ def rows(cursor_rows):
 
 
 def row_dict(row):
-    """Convert a PostgreSQL row to JSON-friendly values."""
+    """Convert a SQLite row to JSON-friendly values."""
     result = dict(row)
     for key, value in result.items():
         if isinstance(value, datetime):
