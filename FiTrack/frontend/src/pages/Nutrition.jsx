@@ -14,14 +14,14 @@ export default function Nutrition() {
 
     return (
         <div>
-            <PageHeader title="Nutrition" subtitle="General food guidance matched to your workout goal." />
+            <PageHeader title="Fuel the effort" subtitle="Simple, practical food guidance for the training you have planned." />
 
-            <label className="mb-6 block max-w-xs">
-                <span className="text-sm font-medium text-slate-700">Show nutrition for</span>
+            <label className="mb-8 block max-w-xs">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#f86d29]">Nutrition plan</span>
                 <select
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+                    className="fitness-field"
                 >
                     {WORKOUTS.map((w) => (
                         <option key={w.id} value={w.id}>
@@ -31,27 +31,31 @@ export default function Nutrition() {
                 </select>
             </label>
 
-            <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">{data.summary}</div>
+            <div className="nutrition-summary">
+                <span className="eyebrow">The focus</span>
+                <p>{data.summary}</p>
+            </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                <section className="rounded-xl border border-slate-200 bg-white p-6 md:col-span-2">
-                    <h2 className="text-lg font-semibold">Recommended foods</h2>
-                    <ul className="mt-3 divide-y divide-slate-100">
+            <div className="grid gap-10 md:grid-cols-[1.4fr_.6fr]">
+                <section className="nutrition-foods">
+                    <h2 className="text-2xl font-black">Build your plate</h2>
+                    <ul className="mt-4 border-t border-[#271C5E]/10">
                         {data.foods.map((f) => (
-                            <li key={f.name} className="py-3">
-                                <p className="font-medium">{f.name}</p>
-                                <p className="text-sm text-slate-500">{f.why}</p>
+                            <li key={f.name} className="grid gap-1 border-b border-[#271C5E]/10 py-4 sm:grid-cols-[1fr_1fr]">
+                                <p className="font-black"><span className="mr-3 text-[#f86d29]">↗</span>{f.name}</p>
+                                <p className="text-sm text-[#271C5E]/55">{f.why}</p>
                             </li>
                         ))}
                     </ul>
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-lg font-semibold">Quick tips</h2>
-                    <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <section className="nutrition-tips">
+                    <p className="eyebrow text-white/55">Keep in mind</p>
+                    <h2 className="mt-2 text-3xl font-black">Quick tips</h2>
+                    <ul className="mt-4 space-y-3 text-sm text-white/65">
                         {data.tips.map((t) => (
                             <li key={t} className="flex gap-2">
-                                <span className="text-emerald-600">•</span>
+                                <span className="text-[#f86d29]">✳</span>
                                 {t}
                             </li>
                         ))}

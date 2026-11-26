@@ -34,16 +34,18 @@ export default function Schedule() {
         setForm({ ...form, day: "", time: "" });
     };
 
-    const inputCls = "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2";
+    const inputCls = "fitness-field";
 
     return (
         <div>
-            <PageHeader title="Schedule" subtitle="Pick a workout, a day and a time for your gym session." />
+            <PageHeader title="Make it happen" subtitle="Put your next workout on the calendar. Show up for the time you set aside." />
 
-            <div className="grid gap-6 md:grid-cols-2">
-                <form onSubmit={onSubmit} noValidate className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+            <div className="schedule-layout">
+                <form onSubmit={onSubmit} noValidate className="schedule-form space-y-5">
+                    <p className="eyebrow text-white/60">Plan a session</p>
+                    <h2 className="mb-6 text-3xl font-black text-white">When are you<br />showing up?</h2>
                     <label className="block">
-                        <span className="text-sm font-medium">Workout</span>
+                        <span className="text-sm font-bold text-white/80">Workout</span>
                         <select name="workoutId" value={form.workoutId} onChange={onChange} className={inputCls}>
                             <option value="">Select a workout</option>
                             {WORKOUTS.map((w) => (
@@ -54,7 +56,7 @@ export default function Schedule() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-sm font-medium">Day</span>
+                        <span className="text-sm font-bold text-white/80">Day</span>
                         <select name="day" value={form.day} onChange={onChange} className={inputCls}>
                             <option value="">Select a day</option>
                             {DAYS.map((d) => (
@@ -63,20 +65,21 @@ export default function Schedule() {
                         </select>
                     </label>
                     <label className="block">
-                        <span className="text-sm font-medium">Time</span>
+                        <span className="text-sm font-bold text-white/80">Time</span>
                         <input type="time" name="time" value={form.time} onChange={onChange} className={inputCls} />
                     </label>
 
                     {error && <p className="text-sm text-red-600">{error}</p>}
-                    {saved && <p className="text-sm text-emerald-700">Session scheduled ✓</p>}
+                    {saved && <p className="text-sm font-bold text-[#f86d29]">Session scheduled ✓</p>}
 
-                    <button className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700">
-                        Add to schedule
+                    <button className="w-full rounded-full bg-[#f86d29] px-4 py-3.5 font-black text-[#271C5E] hover:bg-[#ff8c53]">
+                        Add my session <span aria-hidden="true">↗</span>
                     </button>
                 </form>
 
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-lg font-semibold">Your sessions</h2>
+                <section className="schedule-sessions">
+                    <p className="eyebrow text-[#f86d29]">The week ahead</p>
+                    <h2 className="mb-6 mt-2 text-3xl font-black">Your sessions</h2>
                     {sessions.length === 0 ? (
                         <p className="mt-3 text-sm text-slate-500">Nothing scheduled yet.</p>
                     ) : (
@@ -84,7 +87,7 @@ export default function Schedule() {
                             {sortSessions(sessions).map((s) => {
                                 const w = getWorkout(s.workoutId);
                                 return (
-                                    <li key={s.id} className="flex items-center justify-between gap-3 py-3">
+                                    <li key={s.id} className="flex items-center justify-between gap-3 border-b border-[#271C5E]/10 py-5">
                                         <div>
                                             <p className="font-medium">
                                                 {w.icon} {w.name}

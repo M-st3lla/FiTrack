@@ -1,5 +1,3 @@
-import PageHeader from "../components/PageHeader";
-
 const objectives = [
     "Select workout types according to fitness goals",
     "Get exercise recommendations for each workout",
@@ -12,37 +10,34 @@ const objectives = [
 
 export default function About() {
     return (
-        <div>
-            <PageHeader
-                title="About FiTrack"
-                subtitle="A Gym Workout and Nutrition Management System that organises workouts, nutrition and session schedules in one responsive platform."
-            />
-
-            <div className="grid gap-6 md:grid-cols-2">
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-xl font-semibold">Why we built it</h2>
-                    <p className="mt-2 text-slate-600">
-                        Planning workouts, food and gym times usually means juggling notes, apps and screenshots.
-                        FiTrack puts it all in one place, usable on a phone, tablet or desktop.
-                    </p>
-                    <h2 className="mt-6 text-xl font-semibold">Who it's for</h2>
-                    <p className="mt-2 text-slate-600">
-                        Gym beginners, regular gym users, and anyone who wants a more organised approach to fitness.
-                    </p>
-                </section>
-
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-xl font-semibold">What you can do</h2>
-                    <ul className="mt-3 space-y-2">
-                        {objectives.map((o) => (
-                            <li key={o} className="flex gap-2 text-slate-600">
-                                <span className="text-emerald-600">✓</span>
-                                {o}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            </div>
-        </div>
+        <main className="about-page">
+            <section className="about-hero">
+                <p className="eyebrow text-white/60">Built for real life</p>
+                <h1>FITNESS<br />WITHOUT<br /><span>THE FUSS.</span></h1>
+                <p>FiTrack brings your training, nutrition and schedule into one simple, supportive space.</p>
+                <span className="about-spark" aria-hidden="true">✳</span>
+            </section>
+            <section className="about-story">
+                <div>
+                    <p className="eyebrow text-[#f86d29]">Why FiTrack</p>
+                    <h2>Less planning.<br />More <span>doing.</span></h2>
+                </div>
+                <div className="about-story-copy">
+                    <p>Planning workouts, food and gym times usually means juggling notes, apps and screenshots. FiTrack pulls the pieces together so you can focus on the next step—not managing another system.</p>
+                    <p>Whether you are walking into a gym for the first time or finding your rhythm again, start where you are and build from there.</p>
+                </div>
+            </section>
+            <section className="about-capabilities">
+                <div className="about-capabilities-title">
+                    <p className="eyebrow">One place to</p>
+                    <h2>MOVE<br />FORWARD.</h2>
+                </div>
+                <ul>
+                    {objectives.map((objective, index) => (
+                        <li key={objective}><span>{String(index + 1).padStart(2, "0")}</span>{objective}<b aria-hidden="true">↗</b></li>
+                    ))}
+                </ul>
+            </section>
+        </main>
     );
 }
