@@ -469,6 +469,14 @@ export function AppProvider({ children }) {
           throw new Error("Choose a workout loaded from the backend.");
         }
 
+        if (
+          !Number.isInteger(workout.duration) ||
+          workout.duration < 10 ||
+          workout.duration > 300
+        ) {
+          throw new Error(`The duration for ${workout.name} is invalid.`);
+        }
+
         const date = nextDateForDay(item.day, item.time);
 
         const response = await apiRequest("/sessions", {
@@ -477,7 +485,7 @@ export function AppProvider({ children }) {
             category_id: workout.backendId,
             session_date: date,
             start_time: item.time,
-            duration_min: 60,
+            duration_min: workout.duration,
           },
         });
 

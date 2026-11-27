@@ -106,6 +106,15 @@ html[data-theme="dark"] .button-orange {
 html[data-theme="dark"] [class*="text-slate-"] {
   color: var(--fitrack-muted);
 }
+html[data-theme="dark"] .navbar-logout {
+  border: 1px solid var(--fitrack-rule);
+  background-color: var(--fitrack-surface);
+  color: var(--fitrack-copy);
+}
+html[data-theme="dark"] .navbar-logout:hover {
+  background-color: #3a334d;
+  color: var(--fitrack-copy);
+}
 html[data-theme="dark"] [class*="border-[#271C5E]"],
 html[data-theme="dark"] [class*="border-slate-"],
 html[data-theme="dark"] [class*="divide-slate-"] {
@@ -159,7 +168,7 @@ html[data-theme="dark"] .theme-toggle:hover {
   line-height: 1.4;
   text-transform: uppercase;
 }
-.home-page { margin: -2rem -1.25rem 0; }
+.home-page { width: 100%; }
 .home-hero {
   position: relative;
   min-height: min(720px, calc(100vh - 82px));
@@ -279,6 +288,72 @@ html[data-theme="dark"] .theme-toggle:hover {
   padding: clamp(2rem, 7vw, 6rem);
   color: white;
 }
+.goal-auth-prompt {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.goal-auth-prompt-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(15, 11, 31, .76);
+}
+.goal-auth-prompt-panel {
+  position: relative;
+  width: min(100%, 34rem);
+  border: 1px solid var(--fitrack-rule);
+  border-radius: 1.5rem;
+  background: var(--fitrack-surface);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  color: var(--fitrack-copy);
+  box-shadow: 0 24px 80px -30px rgba(0, 0, 0, .7);
+}
+.goal-auth-prompt-panel h2 {
+  margin-top: .75rem;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 1000;
+  letter-spacing: -.06em;
+  line-height: 1;
+}
+.goal-auth-prompt-panel > p:not(.eyebrow) {
+  margin-top: 1rem;
+  color: var(--fitrack-muted);
+  line-height: 1.65;
+}
+.goal-auth-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+.goal-auth-prompt-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fitrack-rule);
+  border-radius: 999px;
+  padding: .95rem 1.4rem;
+  color: var(--fitrack-copy);
+  font-size: .95rem;
+  font-weight: 900;
+}
+.goal-auth-prompt-login:hover {
+  border-color: var(--fitrack-orange);
+  color: var(--fitrack-orange);
+}
+.goal-auth-prompt-close {
+  margin-top: 1.25rem;
+  color: var(--fitrack-muted);
+  font-size: .9rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.goal-auth-prompt-close:hover { color: var(--fitrack-orange); }
 .home-plan-copy h2 span { color: var(--fitrack-orange); }
 .home-plan-copy > p:not(.eyebrow) { max-width: 28rem; margin-top: 1.5rem; color: rgba(255,255,255,.7); line-height: 1.7; }
 .plan-note { margin-top: 2rem; color: rgba(255,255,255,.85); font-size: 1rem; font-weight: 800; }
@@ -301,12 +376,10 @@ html[data-theme="dark"] .theme-toggle:hover {
 .theme-toggle:hover { border-color: var(--fitrack-orange); color: var(--fitrack-orange); }
 
 @media (min-width: 900px) {
-  .home-page { margin-right: -3rem; margin-left: -3rem; }
   .pathway-section { grid-template-columns: .8fr 1.2fr; }
   .home-plan { grid-template-columns: .9fr 1.1fr; align-items: center; }
 }
 @media (max-width: 640px) {
-  .home-page { margin: -2rem -1.25rem 0; }
   .home-hero { min-height: 650px; }
   .home-hero-photo { inset: 0; opacity: .46; background-position: 58% center; }
   .home-hero-copy { width: 100%; padding: 4rem 1.5rem 5rem; }
@@ -358,12 +431,308 @@ html[data-theme="dark"] .theme-toggle:hover {
 .nutrition-summary p { max-width: 58rem; margin-top: .75rem; font-size: clamp(1.35rem, 3vw, 2.5rem); font-weight: 900; letter-spacing: -.04em; line-height: 1.1; }
 .nutrition-foods li { padding-block: 1.2rem; }
 .nutrition-tips { align-self: start; background: var(--fitrack-ink); padding: 2rem; color: white; }
-.schedule-layout { display: grid; gap: 3rem; }
-.schedule-form { background: var(--fitrack-ink); padding: clamp(1.5rem, 4vw, 3rem); }
-.schedule-form .fitness-field { color: white; border-bottom-color: rgba(255,255,255,.3); }
-.schedule-form select option { color: var(--fitrack-ink); }
-.schedule-sessions { padding: clamp(1rem, 3vw, 2rem) 0; }
-.schedule-sessions li p:first-child { font-weight: 900; }
+.schedule-page { min-width: 0; }
+.schedule-layout {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+}
+.schedule-form {
+  display: grid;
+  align-content: start;
+  gap: 1.35rem;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 1.4rem;
+  background-color: var(--fitrack-ink);
+  padding: clamp(1.35rem, 4vw, 2.5rem);
+  color: white;
+  box-shadow: 0 24px 60px -42px rgba(39, 28, 94, .8);
+}
+.schedule-form-heading {
+  border-bottom: 1px solid rgba(255, 255, 255, .2);
+  padding-bottom: 1.2rem;
+}
+.schedule-form-heading .eyebrow,
+.schedule-sessions-heading .eyebrow { color: var(--fitrack-orange); }
+.schedule-form-heading h2 {
+  margin-top: .55rem;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 1000;
+  letter-spacing: -.065em;
+  line-height: .98;
+}
+.schedule-form-heading > p:last-child {
+  max-width: 31rem;
+  margin-top: .65rem;
+  color: rgba(255, 255, 255, .68);
+  font-size: .92rem;
+  line-height: 1.55;
+}
+.schedule-field { display: block; min-width: 0; }
+.schedule-field-label {
+  display: block;
+  color: rgba(255, 255, 255, .94);
+  font-size: .92rem;
+  font-weight: 850;
+}
+.schedule-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: .45rem;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .08);
+  padding: .72rem .85rem;
+  color: white;
+  color-scheme: dark;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+.schedule-input:focus {
+  border-color: var(--fitrack-orange);
+  background: rgba(255, 255, 255, .12);
+  box-shadow: 0 0 0 3px rgba(248, 109, 41, .18);
+}
+.schedule-input option {
+  background: var(--fitrack-surface);
+  color: var(--fitrack-copy);
+}
+.schedule-fieldset { min-width: 0; border: 0; padding: 0; }
+.schedule-form-hint {
+  margin-top: .35rem;
+  color: rgba(255, 255, 255, .65);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+.schedule-day-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .85rem;
+}
+.schedule-day-choice {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .6rem;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: .8rem;
+  background: rgba(255, 255, 255, .045);
+  padding: .72rem .8rem;
+  color: rgba(255, 255, 255, .82);
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 750;
+  transition: border-color .2s, background-color .2s, color .2s;
+}
+.schedule-day-choice:hover { border-color: var(--fitrack-orange); }
+.schedule-day-choice.is-selected {
+  border-color: var(--fitrack-orange);
+  background: rgba(248, 109, 41, .15);
+  color: white;
+}
+.schedule-day-checkbox {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  accent-color: var(--fitrack-orange);
+}
+.schedule-time-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .85rem;
+}
+.schedule-time-fields legend { grid-column: 1 / -1; margin-bottom: -.2rem; }
+.schedule-time-label {
+  display: block;
+  color: rgba(255, 255, 255, .68);
+  font-size: .82rem;
+  font-weight: 750;
+}
+.schedule-alert {
+  border: 1px solid transparent;
+  border-radius: .8rem;
+  padding: .85rem 1rem;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.schedule-alert-error {
+  border-color: rgba(255, 160, 145, .38);
+  background: rgba(185, 55, 55, .2);
+  color: #ffe0db;
+}
+.schedule-alert-auth {
+  border-color: rgba(248, 109, 41, .38);
+  background: rgba(248, 109, 41, .12);
+  color: rgba(255, 255, 255, .9);
+}
+.schedule-auth-links { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .6rem; }
+.schedule-auth-link {
+  color: var(--fitrack-orange);
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+.schedule-auth-link:hover { color: #ffad7b; }
+.schedule-alert-success {
+  border-color: rgba(248, 109, 41, .4);
+  background: rgba(248, 109, 41, .12);
+  color: #ffd2b8;
+}
+.schedule-submit {
+  display: inline-flex;
+  min-height: 3.2rem;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fitrack-orange);
+  padding: .85rem 1.2rem;
+  color: var(--fitrack-ink);
+  cursor: pointer;
+  font-size: .96rem;
+  font-weight: 950;
+  transition: transform .2s, background-color .2s, box-shadow .2s;
+}
+.schedule-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #ff8c53;
+  box-shadow: 0 10px 24px -16px rgba(248, 109, 41, .9);
+}
+.schedule-submit:disabled { cursor: not-allowed; opacity: .58; }
+.schedule-rest-note {
+  margin-top: -.5rem;
+  color: rgba(255, 255, 255, .62);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+.schedule-sessions {
+  min-width: 0;
+  align-self: start;
+  border: 1px solid var(--fitrack-rule);
+  border-top: 4px solid var(--fitrack-orange);
+  border-radius: 1.4rem;
+  background: var(--fitrack-surface);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  color: var(--fitrack-copy);
+  box-shadow: 0 20px 55px -45px rgba(39, 28, 94, .65);
+}
+.schedule-sessions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--fitrack-rule);
+  padding-bottom: 1rem;
+}
+.schedule-sessions-heading h2 {
+  margin-top: .3rem;
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 1000;
+  letter-spacing: -.055em;
+}
+.schedule-session-count {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--fitrack-orange);
+  color: var(--fitrack-ink);
+  font-size: .85rem;
+  font-weight: 950;
+}
+.schedule-empty-state {
+  display: flex;
+  min-height: 9rem;
+  align-items: center;
+  margin-top: 1.2rem;
+  border: 1px dashed var(--fitrack-rule);
+  border-radius: 1rem;
+  background-image:
+    url("/fitrack-pattern.svg"),
+    radial-gradient(ellipse at 90% 15%, rgba(248, 109, 41, .11), transparent 46%);
+  background-position: right center, center;
+  background-size: 7rem auto, cover;
+  background-repeat: no-repeat;
+  padding: 1.2rem;
+  color: var(--fitrack-muted);
+  font-size: .93rem;
+  line-height: 1.6;
+}
+.schedule-session-list { display: grid; gap: .7rem; margin-top: 1.2rem; }
+.schedule-session-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  border: 1px solid var(--fitrack-rule);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, .025);
+  padding: .85rem;
+}
+.schedule-session-identity { display: flex; min-width: 0; align-items: center; gap: .8rem; }
+.schedule-session-copy { min-width: 0; }
+.schedule-session-title {
+  overflow-wrap: anywhere;
+  color: var(--fitrack-copy);
+  font-size: .98rem;
+  font-weight: 900;
+}
+.schedule-session-details {
+  margin-top: .2rem;
+  color: var(--fitrack-muted);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+.schedule-remove-button {
+  flex: 0 0 auto;
+  border: 1px solid var(--fitrack-rule);
+  border-radius: 999px;
+  padding: .5rem .75rem;
+  color: var(--fitrack-muted);
+  font-size: .78rem;
+  font-weight: 850;
+  transition: border-color .2s, color .2s, background-color .2s;
+}
+.schedule-remove-button:hover {
+  border-color: var(--fitrack-orange);
+  background: rgba(248, 109, 41, .1);
+  color: var(--fitrack-orange);
+}
+.schedule-guest-note {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  margin: -1.5rem 0 2rem;
+  border: 1px solid var(--fitrack-rule);
+  border-left: 4px solid var(--fitrack-orange);
+  border-radius: .9rem;
+  background: var(--fitrack-surface);
+  padding: .85rem 1rem;
+  color: var(--fitrack-muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.schedule-guest-note strong { color: var(--fitrack-copy); }
+.schedule-guest-mark {
+  color: var(--fitrack-orange);
+  font-size: 1.2rem;
+  font-weight: 1000;
+  letter-spacing: -.06em;
+}
+.schedule-loading {
+  border: 1px solid var(--fitrack-rule);
+  border-radius: 1rem;
+  background: var(--fitrack-surface);
+  padding: 1.5rem;
+  color: var(--fitrack-muted);
+}
+.schedule-inline-error { color: #ffb7a8; font-size: .84rem; line-height: 1.5; }
 .dashboard-progress { margin-top: 2rem; background: var(--fitrack-purple); padding: clamp(1.5rem, 4vw, 2.5rem); color: white; }
 .dashboard-progress-track { height: .65rem; overflow: hidden; background: rgba(255,255,255,.2); }
 .dashboard-progress-track > div { height: 100%; background: var(--fitrack-orange); transition: width .3s ease; }

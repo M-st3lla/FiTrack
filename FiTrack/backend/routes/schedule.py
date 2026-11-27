@@ -18,10 +18,11 @@ SESSION_SELECT = """
 """
 
 
-def find_conflict(db, user_id, session_date, start_min, duration, exclude_id=None):
-    """Return an existing active session that overlaps the given slot, else None."""
+def find_conflict(db, user_id, category_id, session_date, start_min, duration,
+                  exclude_id=None):
+    """Return an overlapping session or a same-type back-to-back session, if any."""
     existing = db.execute(
-        "SELECT id, start_time, duration_min FROM sessions "
+        "SELECT id, category_id, start_time, duration_min FROM sessions "
         "WHERE user_id = ? AND session_date = ? AND status != 'cancelled'",
         (user_id, session_date.isoformat() if isinstance(session_date, date)
          else session_date),
@@ -30,7 +31,14 @@ def find_conflict(db, user_id, session_date, start_min, duration, exclude_id=Non
         if exclude_id is not None and s["id"] == exclude_id:
             continue
         s_start = parse_time_minutes(s["start_time"])
-        if start_min < s_start + s["duration_min"] and s_start < start_min + duration:
+        s_end = s_start + s["duration_min"]
+        end_min = start_min + duration
+        overlaps = start_min < s_end and s_start < end_min
+        same_type_back_to_back = (
+            s["category_id"] == category_id
+            and (start_min == s_end or end_min == s_start)
+        )
+        if overlaps or same_type_back_to_back:
             return s
     return None
 
@@ -86,8 +94,12 @@ def create_session():
     if errors:
         return error("Validation failed.", 422, errors)
 
-    if find_conflict(db, g.user["id"], d.isoformat(), start_min, duration):
-        return error("You already have a session that overlaps this time.", 409)
+    if find_conflict(
+            db, g.user["id"], category_id, d.isoformat(), start_min, duration):
+        return error(
+            "Sessions cannot overlap, and the same workout cannot be scheduled back-to-back.",
+            409,
+        )
 
     sid = insert_session(db, g.user["id"], category_id, d.isoformat(),
                          data["start_time"], duration, notes)
@@ -181,8 +193,12 @@ def update_session(session_id):
         return error("Validation failed.", 422, errors)
 
     if status != "cancelled" and find_conflict(
-            db, g.user["id"], d.isoformat(), start_min, duration, exclude_id=session_id):
-        return error("You already have a session that overlaps this time.", 409)
+            db, g.user["id"], current["category_id"], d.isoformat(), start_min,
+            duration, exclude_id=session_id):
+        return error(
+            "Sessions cannot overlap, and the same workout cannot be scheduled back-to-back.",
+            409,
+        )
 
     db.execute(
         "UPDATE sessions SET session_date=?, start_time=?, duration_min=?, notes=?, status=? "

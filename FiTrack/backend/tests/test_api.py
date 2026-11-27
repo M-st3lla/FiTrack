@@ -155,7 +155,11 @@ def test_sessions_crud_and_conflicts(client, auth):
 
     clash = client.post("/api/sessions", headers=auth, json={**body, "start_time": "18:30"})
     assert clash.status_code == 409
-    adjacent = client.post("/api/sessions", headers=auth, json={**body, "start_time": "19:00"})
+    adjacent = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**body, "category_id": 2, "start_time": "19:00"},
+    )
     assert adjacent.status_code == 201
 
     past = client.post("/api/sessions", headers=auth, json={**body, "session_date": future(-1)})
@@ -169,6 +173,75 @@ def test_sessions_crud_and_conflicts(client, auth):
     assert future(2) in client.get("/api/sessions/timetable", headers=auth).get_json()["timetable"]
     assert client.delete(f"/api/sessions/{sid}", headers=auth).status_code == 200
     assert client.get(f"/api/sessions/{sid}", headers=auth).status_code == 404
+
+
+def test_session_conflicts_respect_workout_duration(client, auth):
+    date = future(3)
+    body = {
+        "category_id": 1,
+        "session_date": date,
+        "start_time": "18:00",
+        "duration_min": 40,
+    }
+
+    assert client.post("/api/sessions", headers=auth, json=body).status_code == 201
+    overlap = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**body, "start_time": "18:39", "duration_min": 20},
+    )
+    adjacent = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**body, "category_id": 2, "start_time": "18:40", "duration_min": 20},
+    )
+
+    assert overlap.status_code == 409
+    assert adjacent.status_code == 201
+
+
+def test_same_workout_cannot_be_scheduled_back_to_back(client, auth):
+    date = future(4)
+    first = {
+        "category_id": 1,
+        "session_date": date,
+        "start_time": "18:00",
+        "duration_min": 60,
+    }
+
+    assert client.post("/api/sessions", headers=auth, json=first).status_code == 201
+
+    same_workout_before = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**first, "start_time": "17:15", "duration_min": 45},
+    )
+    same_workout_after = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**first, "start_time": "19:00", "duration_min": 45},
+    )
+    same_workout_with_gap = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**first, "start_time": "19:15", "duration_min": 45},
+    )
+    update_same_workout_back_to_back = client.put(
+        f"/api/sessions/{same_workout_with_gap.get_json()['session']['id']}",
+        headers=auth,
+        json={"start_time": "19:00"},
+    )
+    different_workout_after = client.post(
+        "/api/sessions",
+        headers=auth,
+        json={**first, "category_id": 2, "start_time": "19:00", "duration_min": 15},
+    )
+
+    assert same_workout_before.status_code == 409
+    assert same_workout_after.status_code == 409
+    assert same_workout_with_gap.status_code == 201
+    assert update_same_workout_back_to_back.status_code == 409
+    assert different_workout_after.status_code == 201
 
 
 def test_users_cannot_see_each_others_data(client, auth):

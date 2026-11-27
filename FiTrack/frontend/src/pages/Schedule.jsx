@@ -1,15 +1,15 @@
 ﻿
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import WorkoutImage from "../components/WorkoutImage";
 import { useApp } from "../context/AppContext";
-import { getWorkout } from "../data/workouts";
+import { getWorkout, WORKOUTS } from "../data/workouts";
 import { DAYS, sortSessions } from "../utils/plan";
 
 export default function Schedule() {
     const {
-        user,
+        isAuthenticated,
         profile,
         sessions,
         workouts,
@@ -21,20 +21,30 @@ export default function Schedule() {
         removeSession,
     } = useApp();
 
+    const location = useLocation();
     const [params] = useSearchParams();
 
+    const draft = location.state?.scheduleDraft;
     const requestedWorkout = params.get("workout");
 
-    const initialWorkout = getWorkout(requestedWorkout)
-        ? requestedWorkout
-        : profile?.goal ?? "";
+    const initialWorkout = draft?.workoutId ?? (
+        getWorkout(requestedWorkout)
+            ? requestedWorkout
+            : profile?.goal ?? ""
+    );
 
     const [workoutId, setWorkoutId] = useState(initialWorkout);
-    const [availableDays, setAvailableDays] = useState([]);
-    const [times, setTimes] = useState({});
+    const [availableDays, setAvailableDays] = useState(
+        draft?.availableDays ?? []
+    );
+    const [times, setTimes] = useState(draft?.times ?? {});
     const [error, setError] = useState("");
     const [saved, setSaved] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [authRequired, setAuthRequired] = useState(false);
+
+    const availableWorkouts = isAuthenticated ? workouts : WORKOUTS;
+    const visibleSessions = isAuthenticated ? sessions : [];
 
     // Toggle available workout days
     const onToggleDay = (day) => {
@@ -51,6 +61,7 @@ export default function Schedule() {
 
         setError("");
         setSaved(false);
+        setAuthRequired(false);
     };
 
     // Update workout time
@@ -62,6 +73,7 @@ export default function Schedule() {
 
         setError("");
         setSaved(false);
+        setAuthRequired(false);
     };
 
     // Save weekly workout schedule
@@ -85,8 +97,15 @@ export default function Schedule() {
             return;
         }
 
+        if (!isAuthenticated) {
+            setError("");
+            setAuthRequired(true);
+            return;
+        }
+
         setSaving(true);
         setError("");
+        setAuthRequired(false);
 
         try {
             const err = await addSessions(
@@ -123,77 +142,71 @@ export default function Schedule() {
         }
     };
 
-    const inputCls =
-        "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2";
+    const inputCls = "schedule-input";
 
     const restDays = DAYS.filter(
         (day) => !availableDays.includes(day)
     );
 
-    // Require authentication
-    if (!user) {
-        return (
-            <div>
-                <PageHeader
-                    title="Schedule"
-                    subtitle="Save your workout days and times to your account."
-                />
-
-                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-                    <p className="text-slate-600">
-                        Log in or create an account to save and retrieve your sessions.
-                    </p>
-
-                    <div className="mt-4 flex justify-center gap-3">
-                        <Link
-                            to="/signup"
-                            className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
-                        >
-                            Create account
-                        </Link>
-
-                        <Link
-                            to="/login"
-                            className="rounded-lg border border-slate-300 px-4 py-2 font-semibold"
-                        >
-                            Log in
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     // Loading state
-    if (accountLoading) {
+    if (isAuthenticated && accountLoading) {
         return (
             <p
                 role="status"
-                className="rounded-xl bg-white p-6 text-sm text-slate-500"
+                className="schedule-loading"
             >
                 Loading your saved sessions…
             </p>
         );
     }
 
+    const authState = {
+        from: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+        },
+        scheduleDraft: {
+            workoutId,
+            availableDays,
+            times,
+        },
+    };
+
     return (
-        <div>
+        <div className="schedule-page">
             <PageHeader
                 title="Schedule"
-                subtitle="Choose when you are free and FiTrack will build your weekly workout schedule."
+                subtitle="Explore workout schedules and plan when you want to train."
             />
 
-            <div className="grid gap-6 md:grid-cols-2">
+            {!isAuthenticated && (
+                <aside className="schedule-guest-note">
+                    <span className="schedule-guest-mark" aria-hidden="true">01</span>
+                    <p>
+                        <strong>Planning as a guest?</strong> You can explore and
+                        prepare a schedule here. Log in or create an account to save it.
+                    </p>
+                </aside>
+            )}
+
+            <div className="schedule-layout">
 
                 {/* Workout scheduling form */}
                 <form
                     onSubmit={onSubmit}
                     noValidate
-                    className="space-y-4 rounded-xl border border-slate-200 bg-white p-6"
+                    className="schedule-form"
                 >
+                    <div className="schedule-form-heading">
+                        <p className="eyebrow">Plan your week</p>
+                        <h2>Make time to move.</h2>
+                        <p>Choose your training days and set a start time for each session.</p>
+                    </div>
+
                     {/* Workout selection */}
-                    <label className="block">
-                        <span className="text-sm font-medium">
+                    <label className="schedule-field">
+                        <span className="schedule-field-label">
                             Workout
                         </span>
 
@@ -204,64 +217,62 @@ export default function Schedule() {
                                 setWorkoutId(e.target.value);
                                 setError("");
                                 setSaved(false);
+                                setAuthRequired(false);
                             }}
                             className={inputCls}
                         >
                             <option value="">Select a workout</option>
 
-                            {workouts.map((w) => (
+                            {availableWorkouts.map((w) => (
                                 <option key={w.id} value={w.id}>
-                                    {w.name}
+                                    {w.name} · {w.duration} min
                                 </option>
                             ))}
                         </select>
                     </label>
 
                     {catalogLoading && (
-                        <p role="status" className="text-xs text-slate-500">
+                        <p role="status" className="schedule-form-hint">
                             Loading workouts…
                         </p>
                     )}
 
                     {catalogError && (
-                        <p role="alert" className="text-xs text-red-600">
+                        <p role="alert" className="schedule-inline-error">
                             Could not load workouts: {catalogError}
                         </p>
                     )}
 
                     {accountError && (
-                        <p role="alert" className="text-xs text-red-600">
+                        <p role="alert" className="schedule-inline-error">
                             {accountError}
                         </p>
                     )}
 
                     {/* Available days */}
-                    <fieldset>
-                        <legend className="text-sm font-medium">
+                    <fieldset className="schedule-fieldset">
+                        <legend className="schedule-field-label">
                             Days you are free to work out
                         </legend>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="schedule-form-hint">
                             Unselected days will be your rest days.
                         </p>
 
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <div className="schedule-day-grid">
                             {DAYS.map((day) => {
                                 const selected = availableDays.includes(day);
 
                                 return (
                                     <label
                                         key={day}
-                                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${selected
-                                                ? "border-emerald-500 bg-emerald-50"
-                                                : "border-slate-200"
-                                            }`}
+                                        className={`schedule-day-choice${selected ? " is-selected" : ""}`}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={selected}
                                             onChange={() => onToggleDay(day)}
-                                            className="accent-emerald-600"
+                                            className="schedule-day-checkbox"
                                         />
 
                                         <span>{day}</span>
@@ -273,16 +284,16 @@ export default function Schedule() {
 
                     {/* Workout times */}
                     {availableDays.length > 0 && (
-                        <fieldset className="space-y-3">
-                            <legend className="text-sm font-medium">
+                        <fieldset className="schedule-fieldset schedule-time-fields">
+                            <legend className="schedule-field-label">
                                 Workout time for each available day
                             </legend>
 
                             {DAYS.filter((day) =>
                                 availableDays.includes(day)
                             ).map((day) => (
-                                <label key={day} className="block">
-                                    <span className="text-sm text-slate-600">
+                                <label key={day} className="schedule-field">
+                                    <span className="schedule-time-label">
                                         {day}
                                     </span>
 
@@ -302,22 +313,44 @@ export default function Schedule() {
 
                     {/* Feedback */}
                     {error && (
-                        <p role="alert" className="text-sm text-red-600">
+                        <p role="alert" className="schedule-alert schedule-alert-error">
                             {error}
                         </p>
                     )}
 
+                    {authRequired && (
+                        <div role="alert" className="schedule-alert schedule-alert-auth">
+                            <p>Log in or create an account to save your schedule.</p>
+                            <div className="schedule-auth-links">
+                                <Link
+                                    to="/signup"
+                                    state={authState}
+                                    className="schedule-auth-link"
+                                >
+                                    Create account
+                                </Link>
+                                <Link
+                                    to="/login"
+                                    state={authState}
+                                    className="schedule-auth-link"
+                                >
+                                    Log in
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
                     {saved && (
-                        <p className="text-sm text-emerald-700">
-                            Your weekly workout schedule is ready ✓
+                        <p className="schedule-alert schedule-alert-success">
+                            Your weekly workout schedule is ready.
                         </p>
                     )}
 
                     {/* Submit */}
                     <button
                         type="submit"
-                        disabled={saving || catalogLoading || !workouts.length}
-                        className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                        disabled={saving || catalogLoading || !availableWorkouts.length}
+                        className="schedule-submit"
                     >
                         {saving
                             ? "Saving sessions…"
@@ -326,7 +359,7 @@ export default function Schedule() {
 
                     {/* Rest days */}
                     {availableDays.length > 0 && (
-                        <p className="text-xs text-slate-500">
+                        <p className="schedule-rest-note">
                             Rest days:{" "}
                             {restDays.length ? restDays.join(", ") : "None"}
                         </p>
@@ -334,18 +367,26 @@ export default function Schedule() {
                 </form>
 
                 {/* Saved workout sessions */}
-                <section className="rounded-xl border border-slate-200 bg-white p-6">
-                    <h2 className="text-lg font-semibold">
-                        Your sessions
-                    </h2>
+                <section className="schedule-sessions">
+                    <div className="schedule-sessions-heading">
+                        <div>
+                            <p className="eyebrow">Your training log</p>
+                            <h2>Your sessions</h2>
+                        </div>
+                        <span className="schedule-session-count">
+                            {visibleSessions.length.toString().padStart(2, "0")}
+                        </span>
+                    </div>
 
-                    {sessions.length === 0 ? (
-                        <p className="mt-3 text-sm text-slate-500">
-                            Nothing scheduled yet.
+                    {visibleSessions.length === 0 ? (
+                        <p className="schedule-empty-state">
+                            {isAuthenticated
+                                ? "Your week is open. Build a schedule to add your first session."
+                                : "Your saved sessions will appear here after you log in."}
                         </p>
                     ) : (
-                        <ul className="mt-3 divide-y divide-slate-100">
-                            {sortSessions(sessions).map((s) => {
+                        <ul className="schedule-session-list">
+                            {sortSessions(visibleSessions).map((s) => {
                                 const w =
                                     workouts.find(
                                         (item) => item.id === s.workoutId
@@ -354,22 +395,22 @@ export default function Schedule() {
                                 return (
                                     <li
                                         key={s.id}
-                                        className="flex items-center justify-between gap-3 border-b border-[#271C5E]/10 py-5"
+                                        className="schedule-session-card"
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="schedule-session-identity">
                                             <WorkoutImage
                                                 workout={w}
                                                 className="workout-mini-image"
                                             />
 
-                                            <div>
-                                                <p className="font-medium">
+                                            <div className="schedule-session-copy">
+                                                <p className="schedule-session-title">
                                                     {w?.name ?? "Workout"}
                                                 </p>
 
-                                                <p className="text-sm text-slate-500">
+                                                <p className="schedule-session-details">
                                                     {s.day}
-                                                    {s.date ? `, ${s.date}` : ""} · {s.time}
+                                                    {s.date ? `, ${s.date}` : ""} · {s.time} · {s.durationMin} min
                                                 </p>
                                             </div>
                                         </div>
@@ -377,7 +418,7 @@ export default function Schedule() {
                                         <button
                                             type="button"
                                             onClick={() => onRemove(s.id)}
-                                            className="text-sm text-red-600 hover:underline"
+                                            className="schedule-remove-button"
                                         >
                                             Remove
                                         </button>
