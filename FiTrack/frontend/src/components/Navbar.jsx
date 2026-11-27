@@ -27,7 +27,7 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
   const handleLogout = () => {
     logout();
     setOpen(false);
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -66,7 +66,7 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="ml-2 rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                className="navbar-logout ml-2 rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
               >
                 Log out
               </button>
@@ -128,7 +128,7 @@ export default function Navbar({ isDarkMode, onToggleTheme }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-md bg-slate-100 px-3 py-2 text-left text-sm font-medium text-slate-700"
+                className="navbar-logout rounded-md bg-slate-100 px-3 py-2 text-left text-sm font-medium text-slate-700"
               >
                 Log out
               </button>

@@ -5,7 +5,6 @@ import {
   Routes,
   Route,
   Link,
-  Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -48,17 +47,15 @@ function getReturnPath(location) {
   return `${from.pathname}${from.search || ""}${from.hash || ""}`;
 }
 
-function RequireLogin({ children }) {
-  const { isAuthenticated, accountLoading } = useApp();
-  const location = useLocation();
-
-  if (accountLoading) {
-    return <p role="status" className="p-8 text-center">Checking your account…</p>;
+function getReturnState(location) {
+  const returnState = {};
+  for (const key of ["goalDraft", "scheduleDraft"]) {
+    const value = location.state?.[key];
+    if (value && typeof value === "object") {
+      returnState[key] = value;
+    }
   }
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  return children;
+  return Object.keys(returnState).length ? returnState : undefined;
 }
 
 function LoginPage() {
@@ -68,7 +65,10 @@ function LoginPage() {
 
   const handleLogin = async (formData) => {
     await login(formData);
-    navigate(getReturnPath(location), { replace: true });
+    navigate(getReturnPath(location), {
+      replace: true,
+      state: getReturnState(location),
+    });
   };
 
   return <Login onLogin={handleLogin} authState={location.state} />;
@@ -81,7 +81,10 @@ function SignupPage() {
 
   const handleSignup = async (formData) => {
     await signup(formData);
-    navigate(getReturnPath(location), { replace: true });
+    navigate(getReturnPath(location), {
+      replace: true,
+      state: getReturnState(location),
+    });
   };
 
   return <Signup onSignup={handleSignup} authState={location.state} />;
@@ -93,6 +96,7 @@ function AppLayout({ isDarkMode, onToggleTheme }) {
   const isAuthPage = ["/login", "/signup", "/register"].includes(
     location.pathname
   );
+  const isHomePage = location.pathname === "/";
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f7fb] text-[#271C5E]">
@@ -116,6 +120,8 @@ function AppLayout({ isDarkMode, onToggleTheme }) {
         className={
           isAuthPage
             ? "flex-1"
+            : isHomePage
+              ? "w-full flex-1"
             : "mx-auto w-full max-w-[1480px] flex-1 px-5 py-8 sm:px-8 lg:px-12"
         }
       >
@@ -129,9 +135,9 @@ function AppLayout({ isDarkMode, onToggleTheme }) {
 
           {/* Main application */}
           <Route path="/about" element={<About />} />
-          <Route path="/workouts" element={<RequireLogin><Workouts /></RequireLogin>} />
-          <Route path="/nutrition" element={<RequireLogin><Nutrition /></RequireLogin>} />
-          <Route path="/schedule" element={<RequireLogin><Schedule /></RequireLogin>} />
+          <Route path="/workouts" element={<Workouts />} />
+          <Route path="/nutrition" element={<Nutrition />} />
+          <Route path="/schedule" element={<Schedule />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/contact" element={<Contact />} />
 

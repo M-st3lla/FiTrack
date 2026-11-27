@@ -240,7 +240,9 @@ def schedule_goal(goal_id):
     for day in _planned_days(goal, spw):
         if day["date"] < today:
             skipped.append({"date": day["date"], "reason": "in the past"})
-        elif find_conflict(db, g.user["id"], day["date"], start_min, duration):
+        elif find_conflict(
+                db, g.user["id"], goal["category_id"], day["date"], start_min,
+                duration):
             skipped.append({"date": day["date"], "reason": "clashes with another session"})
         else:
             insert_session(db, g.user["id"], goal["category_id"], day["date"],
